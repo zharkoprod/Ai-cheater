@@ -603,15 +603,15 @@ strong.nc-danger, b.nc-danger{
 }
 
 /* ─── Кастомный YouTube-плеер: превью + большая синяя кнопка play ─── */
-/* Зацикленный showcase-видео промптов (autoplay, muted, loop) */
+/* Зацикленный showcase-баннер промптов (GIF, autoplay-loop встроены) */
 .nc-video-loop{
   position:relative;width:100%;border-radius:18px;overflow:hidden;
-  margin:20px 0;background:#000;
+  margin:20px 0;background:#fff;
   box-shadow:0 30px 70px -30px rgba(0,0,0,.6), 0 0 0 1px var(--nc-line-2);
 }
-.nc-video-loop video{
+.nc-video-loop img{
   display:block;width:100%;height:auto;
-  pointer-events:none;
+  pointer-events:none;user-select:none;-webkit-user-drag:none;
 }
 .nc-video-loop::before{
   content:"";position:absolute;inset:0;border-radius:18px;pointer-events:none;
@@ -1979,7 +1979,7 @@ strong.nc-brand .nc-glitch, b.nc-brand .nc-glitch,
     </div>
 
     <div class="nc-video-loop nc-reveal nc-reveal-d2" aria-hidden="true">
-      <video src="images/promts-showcase.mp4" autoplay loop muted playsinline preload="metadata" disablepictureinpicture></video>
+      <img src="images/promts-showcase.gif" alt="" loading="lazy" decoding="async" draggable="false">
     </div>
 
     <p class="nc-p nc-reveal nc-reveal-d2">Это библиотека из <strong class="nc-brand">15 глубоких авторских промптов</strong> для нейросетей. Не 100, не 500, не 1000. Пятнадцать. Каждый — выстраданная мини-машина под конкретную задачу контент-мейкера, эксперта, предпринимателя, маркетолога или продюсера</p>

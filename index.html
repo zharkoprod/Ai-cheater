@@ -689,6 +689,12 @@ strong.nc-danger, b.nc-danger{
   backdrop-filter:blur(8px);
 }
 .nc-callout-icon{font-size:28px;flex-shrink:0;line-height:1;display:flex;align-items:center;}
+.nc-callout-icon--logo{
+  width:42px;height:42px;border-radius:10px;
+  background:url(images/logo.svg) center/cover no-repeat;
+  box-shadow:0 8px 24px var(--nc-brand-glow);
+  align-self:flex-start;margin-top:2px;
+}
 .nc-callout-content{flex:1;min-width:0;}
 .nc-callout-content h2,
 .nc-callout-content h3,
@@ -1974,7 +1980,7 @@ strong.nc-brand .nc-glitch, b.nc-brand .nc-glitch,
   <div class="nc-container nc-container--narrow">
 
     <div class="nc-callout nc-reveal">
-      <div class="nc-callout-icon">🤖</div>
+      <div class="nc-callout-icon nc-callout-icon--logo" aria-hidden="true"></div>
       <div class="nc-callout-content"><h2 class="nc-h2" style="margin:0;">Что такое <strong class="nc-brand" style="font-weight:800;">Нейро-ЧИТЕР</strong>?</h2></div>
     </div>
 

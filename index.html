@@ -2666,5 +2666,29 @@ strong.nc-brand .nc-glitch, b.nc-brand .nc-glitch,
 })();
 </script>
 
+
+<script>
+/* © Кирилл Жарко · Нейро-ЧИТЕР · защита от ленивого копирования (не мешает чтению) */
+(function(){
+  try {
+    document.addEventListener('contextmenu', function(e){ e.preventDefault(); }, false);
+    document.addEventListener('keydown', function(e){
+      var k = e.key, ctrl = e.ctrlKey || e.metaKey, shift = e.shiftKey;
+      if (
+        k === 'F12' ||
+        (ctrl && (k === 'u' || k === 'U' || k === 's' || k === 'S')) ||
+        (ctrl && shift && (k === 'I' || k === 'i' || k === 'J' || k === 'j' || k === 'C' || k === 'c'))
+      ) { e.preventDefault(); return false; }
+    }, false);
+    document.addEventListener('dragstart', function(e){ if(e.target && e.target.tagName === 'IMG') e.preventDefault(); }, false);
+    if (typeof console !== 'undefined' && console.log) {
+      var ban = 'background:linear-gradient(135deg,#5BE0FF,#08ADEC,#0476FF);color:#fff;font-size:18px;padding:10px 16px;border-radius:8px;font-weight:700;';
+      var sub = 'color:#9BA4B5;font-size:13px;padding:8px 0;';
+      console.log('%c© Нейро-ЧИТЕР · Кирилл Жарко', ban);
+      console.log('%cЭтот код — авторская работа. Любое копирование, воспроизведение или коммерческое использование запрещено.\nКонтакт: t.me/zharkoprod', sub);
+    }
+  } catch(e) {}
+})();
+</script>
 </body>
 </html>

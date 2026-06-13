@@ -603,6 +603,21 @@ strong.nc-danger, b.nc-danger{
 }
 
 /* ─── Кастомный YouTube-плеер: превью + большая синяя кнопка play ─── */
+/* Зацикленный showcase-видео промптов (autoplay, muted, loop) */
+.nc-video-loop{
+  position:relative;width:100%;border-radius:18px;overflow:hidden;
+  margin:20px 0;background:#000;
+  box-shadow:0 30px 70px -30px rgba(0,0,0,.6), 0 0 0 1px var(--nc-line-2);
+}
+.nc-video-loop video{
+  display:block;width:100%;height:auto;
+  pointer-events:none;
+}
+.nc-video-loop::before{
+  content:"";position:absolute;inset:0;border-radius:18px;pointer-events:none;
+  box-shadow:inset 0 0 24px rgba(8,173,236,.18);
+}
+
 .nc-video-yt-custom{
   position:relative;width:100%;aspect-ratio:16/9;border-radius:18px;overflow:hidden;
   background:#000;cursor:pointer;margin:18px 0;
@@ -1961,6 +1976,10 @@ strong.nc-brand .nc-glitch, b.nc-brand .nc-glitch,
     <div class="nc-callout nc-reveal">
       <div class="nc-callout-icon">🤖</div>
       <div class="nc-callout-content"><h2 class="nc-h2" style="margin:0;">Что такое <strong class="nc-brand" style="font-weight:800;">Нейро-ЧИТЕР</strong>?</h2></div>
+    </div>
+
+    <div class="nc-video-loop nc-reveal nc-reveal-d2" aria-hidden="true">
+      <video src="images/promts-showcase.mp4" autoplay loop muted playsinline preload="metadata" disablepictureinpicture></video>
     </div>
 
     <p class="nc-p nc-reveal nc-reveal-d2">Это библиотека из <strong class="nc-brand">15 глубоких авторских промптов</strong> для нейросетей. Не 100, не 500, не 1000. Пятнадцать. Каждый — выстраданная мини-машина под конкретную задачу контент-мейкера, эксперта, предпринимателя, маркетолога или продюсера</p>

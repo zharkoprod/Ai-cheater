@@ -1,0 +1,14 @@
+# Конфиг Cloudflare Worker для приёмника постбэков ЮKassa.
+# Деплой: npm i -g wrangler && wrangler login && wrangler deploy
+# (или загрузить worker.js через веб-панель Cloudflare — см. README.md)
+
+name = "neuro-cheater-payment-webhook"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+
+# ВАЖНО: секреты сюда НЕ пишем. Их задают командой:
+#   wrangler secret put TELEGRAM_BOT_TOKEN
+#   wrangler secret put TELEGRAM_CHAT_ID
+#   wrangler secret put YOOKASSA_SHOP_ID
+#   wrangler secret put YOOKASSA_SECRET_KEY
+# либо через панель Cloudflare: Workers → Settings → Variables and Secrets.

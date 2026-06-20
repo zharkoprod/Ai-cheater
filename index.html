@@ -13,6 +13,8 @@
 <meta name="author" content="Кирилл Жарко · @zharkoprod">
 <meta name="copyright" content="© Кирилл Жарко, 2026. Все права защищены">
 <meta name="robots" content="index, follow, max-snippet:-1">
+<!-- Telegram WebApp SDK — для нативной оплаты внутри Mini App -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -2097,7 +2099,7 @@ strong.nc-brand .nc-glitch, b.nc-brand .nc-glitch,
           <li><strong>В планах библиотеки:</strong> Claude Skills, мега-промпты под воронки, прогревы и Ютуб от А до Я — получишь автоматически</li>
         </ul>
         <div class="nc-tariff-note">Эта цена одного сценария Рилс у фрилансера — 100% окупается с любой первой продажи твоих услуг или продукта 🫶🏻</div>
-        <a href="https://yookassa.ru/my/i/aixWahvbh3u6/l" target="_blank" rel="noopener" class="nc-cta nc-cta-primary nc-cta-large" data-magnetic style="width:100%;">Забрать за 2 990 ₽ →</a>
+        <a href="https://yookassa.ru/my/i/aixWahvbh3u6/l" target="_blank" rel="noopener" data-tg-invoice="https://t.me/$luxjSBteuUnCGAAAis7TyjRKyoM" data-tg-tariff="basic" class="nc-cta nc-cta-primary nc-cta-large" data-magnetic style="width:100%;">Забрать за 2 990 ₽ →</a>
       </div>
 
       <div class="nc-tariff-divider nc-reveal">
@@ -2120,7 +2122,7 @@ strong.nc-brand .nc-glitch, b.nc-brand .nc-glitch,
           <li>Ответы на любые твои вопросы по внедрению — навсегда!</li>
         </ul>
         <p class="nc-tariff-note" style="background:transparent;border-left:none;padding:8px 0;color:var(--nc-ink-soft);">Всего 5 мест в месяц <span class="nc-danger"><strong>(осталось 2/5)</strong></span>. У меня физически не получится помочь внедрить всем, чтобы это было на 300% качественно. Как только лимит закроется — тариф уйдет в режим листа ожидания 🫶🏻</p>
-        <a href="https://yookassa.ru/my/i/aixW_7tM7IA7/l" target="_blank" rel="noopener" class="nc-cta nc-cta-primary nc-cta-large" data-magnetic style="width:100%;">Забрать с разбором за 14 900 ₽ →</a>
+        <a href="https://yookassa.ru/my/i/aixW_7tM7IA7/l" target="_blank" rel="noopener" data-tg-invoice="https://t.me/$Fqs8UxteuUnDGAAAaUtTb5mUWjc" data-tg-tariff="premium" class="nc-cta nc-cta-primary nc-cta-large" data-magnetic style="width:100%;">Забрать с разбором за 14 900 ₽ →</a>
       </div>
 
     </div>
@@ -2648,6 +2650,33 @@ strong.nc-brand .nc-glitch, b.nc-brand .nc-glitch,
 })();
 </script>
 
+
+<script>
+/* Telegram Mini App — нативная оплата через openInvoice */
+(function(){
+  var tg = window.Telegram && window.Telegram.WebApp;
+  if(!tg) return; // Не Telegram — оставляем yookassa.ru как fallback
+  try{ tg.ready(); tg.expand(); }catch(e){}
+  document.querySelectorAll('a[data-tg-invoice]').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      var invoiceUrl = btn.getAttribute('data-tg-invoice');
+      if(!invoiceUrl || !tg.openInvoice) return; // если SDK старый — обычный переход
+      e.preventDefault();
+      tg.HapticFeedback && tg.HapticFeedback.impactOccurred && tg.HapticFeedback.impactOccurred('medium');
+      tg.openInvoice(invoiceUrl, function(status){
+        if(status === 'paid'){
+          tg.HapticFeedback && tg.HapticFeedback.notificationOccurred && tg.HapticFeedback.notificationOccurred('success');
+          tg.showAlert('✅ Оплата прошла! Доступ скоро придёт тебе в боте.');
+        } else if(status === 'failed'){
+          tg.HapticFeedback && tg.HapticFeedback.notificationOccurred && tg.HapticFeedback.notificationOccurred('error');
+          tg.showAlert('Что-то пошло не так. Попробуй ещё раз или напиши @zharkoprod');
+        }
+        // 'cancelled' и 'pending' — молча
+      });
+    });
+  });
+})();
+</script>
 
 <script>
 /* © Кирилл Жарко · Нейро-ЧИТЕР · защита от ленивого копирования (не мешает чтению) */

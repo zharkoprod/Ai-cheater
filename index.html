@@ -2655,8 +2655,11 @@ strong.nc-brand .nc-glitch, b.nc-brand .nc-glitch,
 /* Telegram Mini App — нативная оплата через openInvoice (надёжная версия) */
 (function(){
   var tg = window.Telegram && window.Telegram.WebApp;
-  var isInTelegram = !!(tg && tg.initData !== undefined);
   if(!tg){ return; } // SDK не загрузился — fallback на yookassa.ru
+  // Проверяем что мы РЕАЛЬНО в Telegram Mini App, а не SDK подгружен в обычном браузере.
+  // Признаки: непустая initData ИЛИ известная платформа (не 'unknown').
+  var isInTelegram = (tg.initData && tg.initData.length > 0) || (tg.platform && tg.platform !== 'unknown');
+  if(!isInTelegram){ return; } // обычный браузер — кнопки оставляем как есть (yookassa.ru fallback)
   try{ tg.ready(); tg.expand(); }catch(e){}
 
   function attachInvoiceHandler(btn){

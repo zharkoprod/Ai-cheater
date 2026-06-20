@@ -2652,29 +2652,53 @@ strong.nc-brand .nc-glitch, b.nc-brand .nc-glitch,
 
 
 <script>
-/* Telegram Mini App — нативная оплата через openInvoice */
+/* Telegram Mini App — нативная оплата через openInvoice (надёжная версия) */
 (function(){
   var tg = window.Telegram && window.Telegram.WebApp;
-  if(!tg) return; // Не Telegram — оставляем yookassa.ru как fallback
+  var isInTelegram = !!(tg && tg.initData !== undefined);
+  if(!tg){ return; } // SDK не загрузился — fallback на yookassa.ru
   try{ tg.ready(); tg.expand(); }catch(e){}
-  document.querySelectorAll('a[data-tg-invoice]').forEach(function(btn){
+
+  function attachInvoiceHandler(btn){
+    var invoiceUrl = btn.getAttribute('data-tg-invoice');
+    if(!invoiceUrl) return;
+
+    // ВАЖНО: в Mini App target=_blank открывает внешний браузер вместо openInvoice
+    // Убираем атрибуты которые мешают, превращаем ссылку в JS-кнопку
+    btn.removeAttribute('target');
+    btn.removeAttribute('rel');
+    btn.setAttribute('href', 'javascript:void(0)');
+    btn.style.cursor = 'pointer';
+
     btn.addEventListener('click', function(e){
-      var invoiceUrl = btn.getAttribute('data-tg-invoice');
-      if(!invoiceUrl || !tg.openInvoice) return; // если SDK старый — обычный переход
       e.preventDefault();
-      tg.HapticFeedback && tg.HapticFeedback.impactOccurred && tg.HapticFeedback.impactOccurred('medium');
+      e.stopPropagation();
+
+      if(!tg.openInvoice){
+        tg.showAlert && tg.showAlert('Обнови Telegram до последней версии — старая не умеет оплачивать внутри статьи');
+        return false;
+      }
+
+      try{ tg.HapticFeedback.impactOccurred('medium'); }catch(e){}
+
       tg.openInvoice(invoiceUrl, function(status){
         if(status === 'paid'){
-          tg.HapticFeedback && tg.HapticFeedback.notificationOccurred && tg.HapticFeedback.notificationOccurred('success');
-          tg.showAlert('✅ Оплата прошла! Доступ скоро придёт тебе в боте.');
+          try{ tg.HapticFeedback.notificationOccurred('success'); }catch(e){}
+          tg.showAlert('✅ Оплата прошла! Доступ придёт тебе в боте в течение минуты.');
         } else if(status === 'failed'){
-          tg.HapticFeedback && tg.HapticFeedback.notificationOccurred && tg.HapticFeedback.notificationOccurred('error');
-          tg.showAlert('Что-то пошло не так. Попробуй ещё раз или напиши @zharkoprod');
+          try{ tg.HapticFeedback.notificationOccurred('error'); }catch(e){}
+          tg.showAlert('Платёж не прошёл. Попробуй ещё раз или напиши @zharkoprod');
+        } else if(status === 'pending'){
+          tg.showAlert('Платёж обрабатывается. Доступ придёт когда банк подтвердит оплату.');
         }
-        // 'cancelled' и 'pending' — молча
+        // 'cancelled' — молча
       });
+      return false;
     });
-  });
+  }
+
+  // Сразу при загрузке + повторно через 100мс на случай динамики
+  document.querySelectorAll('a[data-tg-invoice]').forEach(attachInvoiceHandler);
 })();
 </script>
 

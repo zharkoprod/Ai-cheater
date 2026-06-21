@@ -757,29 +757,19 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
 /* ────────────────────────────────────────
-   TOTP — 6-значный код, меняется каждый час
-   СЕКРЕТ: замени строку ниже на свой ключ
-   и используй тот же ключ в Cloudflare Worker
+   Проверка пароля через сервер (Railway)
+   Секрет хранится на сервере, не в коде
 ──────────────────────────────────────── */
-const TOTP_SECRET = 'NCh_ZhKP_2026_xX9q7R'; // ← CHANGE THIS
-
-async function genTOTP(secret, step = 3600, offset = 0) {
-  const counter = Math.floor(Date.now() / 1000 / step) + offset;
-  const enc = new TextEncoder();
-  const keyBuf = enc.encode(secret);
-  const ctrBuf = new ArrayBuffer(8);
-  new DataView(ctrBuf).setUint32(4, counter >>> 0, false);
-  const key = await crypto.subtle.importKey('raw', keyBuf, {name:'HMAC',hash:'SHA-1'}, false, ['sign']);
-  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', key, ctrBuf));
-  const off = sig[sig.length - 1] & 0xf;
-  const code = ((sig[off] & 0x7f) << 24) | (sig[off+1] << 16) | (sig[off+2] << 8) | sig[off+3];
-  return String(code % 1000000).padStart(6, '0');
-}
+const VERIFY_URL = 'https://worker-production-88fd.up.railway.app';
 
 async function isValidPass(input) {
-  // Accept current, previous and next hour (clock drift tolerance)
-  const checks = await Promise.all([-1, 0, 1].map(o => genTOTP(TOTP_SECRET, 3600, o)));
-  return checks.includes(input.trim());
+  try {
+    const res = await fetch(`${VERIFY_URL}/verify-access?t=${encodeURIComponent(input.trim())}`);
+    const data = await res.json();
+    return data.ok === true;
+  } catch (e) {
+    return false;
+  }
 }
 
 /* ────────────────────────────────────────

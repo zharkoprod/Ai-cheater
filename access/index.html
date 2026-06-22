@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
   <meta name="referrer" content="no-referrer">
+
+  <!-- ━━━ Security Headers ━━━ -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://worker-production-88fd.up.railway.app; worker-src 'self' blob:; base-uri 'self'; form-action 'none'; frame-ancestors 'self' https://web.telegram.org https://*.telegram.org https://t.me; object-src 'none'; upgrade-insecure-requests">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
+
   <title>Нейро-ЧИТЫ от Кирилла Жарко</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -752,9 +758,13 @@
 </div>
 
 <!-- ═══════════════════════════════════════
-     PDF.js
+     PDF.js 4.10.38 — локально (закрывает CVE-2024-4367 + supply-chain risk)
 ═══════════════════════════════════════ -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script type="module">
+  import * as pdfjsLib from './lib/pdf.min.mjs';
+  window.pdfjsLib = pdfjsLib;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = './lib/pdf.worker.min.mjs';
+</script>
 <script>
 /* ────────────────────────────────────────
    Проверка пароля через сервер (Railway)
@@ -881,9 +891,16 @@ initAuth();
 /* ────────────────────────────────────────
    PDF VIEWER
 ──────────────────────────────────────── */
-if (typeof pdfjsLib !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
-    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+// PDF.js workerSrc уже настроен в module-инициализации выше (локальный путь)
+// Это легаси-чек на случай если pdfjsLib не загрузился вовремя
+function ensurePdfReady(){
+  return new Promise(function(resolve){
+    if(window.pdfjsLib) return resolve();
+    var t = setInterval(function(){
+      if(window.pdfjsLib){ clearInterval(t); resolve(); }
+    }, 50);
+    setTimeout(function(){ clearInterval(t); resolve(); }, 3000);
+  });
 }
 
 let pdfDoc = null, currentPage = 1, totalPages = 0;
@@ -900,6 +917,8 @@ async function openPdf(btn, title, url) {
     '<div class="pdf-loading"><div class="spinner"></div> Загрузка...</div>';
 
   try {
+    await ensurePdfReady();
+    if(!window.pdfjsLib){ throw new Error('PDF.js не загрузился'); }
     pdfDoc = await pdfjsLib.getDocument(url).promise;
     totalPages = pdfDoc.numPages;
     currentPage = 1;

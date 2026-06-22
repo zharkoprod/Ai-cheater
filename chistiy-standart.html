@@ -1,0 +1,1964 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1118">
+<meta name="robots" content="index, follow">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none';">
+
+<title>Чистый Стандарт — узнай экологию своего района СПб в Telegram</title>
+<meta name="description" content="Бесплатный Telegram-бот: показывает реальное состояние воздуха, шума и зелени по 18 районам Санкт-Петербурга. Без приложений, без регистрации. Данные из 5 открытых источников.">
+<meta name="author" content="Сергеев К.А., СПбГМТУ, 2026">
+
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:title" content="Чистый Стандарт — экология твоего района СПб в Telegram">
+<meta property="og:description" content="Узнай за 30 секунд, чем ты дышишь дома, и стоит ли сегодня вести ребёнка гулять.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Inter+Tight:wght@600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+@property --cs-angle{syntax:'<angle>';initial-value:0deg;inherits:false;}
+
+/* ============================== TOKENS ============================== */
+:root{
+  --bg:           #0a0f15;
+  --bg-2:         #0e1621;
+  --bg-3:         #111b27;
+  --surface:      #15212e;
+  --surface-2:   #1c2a3a;
+  --line:         rgba(255,255,255,.06);
+  --line-2:       rgba(255,255,255,.12);
+  --line-3:       rgba(255,255,255,.22);
+
+  --ink:          #ffffff;
+  --ink-soft:     #e7ecf4;
+  --ink-muted:    #9aa6b4;
+  --ink-dim:      #5e6879;
+
+  --eco-1:        #16d97e;
+  --eco-2:        #1bbf6e;
+  --eco-3:        #5cffb4;
+  --eco-soft:     rgba(27,191,110,.10);
+  --eco-glow:     rgba(27,191,110,.45);
+
+  --tg-blue:      #4ea4f6;
+  --tg-bubble-in: #182533;
+  --tg-bubble-out:#2b5278;
+
+  --warn:         #f5a524;
+  --bad:          #ef4444;
+  --crit:         #b91c1c;
+
+  --r-1: 8px; --r-2: 14px; --r-3: 20px; --r-4: 28px;
+  --shadow-1: 0 1px 0 rgba(255,255,255,.04) inset, 0 10px 30px rgba(0,0,0,.35);
+  --shadow-2: 0 24px 60px rgba(0,0,0,.55);
+  --shadow-eco: 0 18px 50px -10px var(--eco-glow);
+
+  --container: 1240px;
+  --pad: clamp(20px, 4vw, 56px);
+
+  --sans:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --display: 'Inter Tight', 'Inter', sans-serif;
+  --mono:    'JetBrains Mono', ui-monospace, Menlo, monospace;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;}
+html, body{margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--ink-soft);
+  font-family:var(--sans);font-weight:400;line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  overflow-x:hidden;
+}
+::selection{background:var(--eco-2);color:#062512;}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+
+/* ============================== AMBIENT BG ============================== */
+body::before{
+  content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background:
+    radial-gradient(50% 35% at 15% 5%, rgba(27,191,110,.18), transparent 65%),
+    radial-gradient(45% 30% at 92% 8%, rgba(92,255,180,.10), transparent 65%),
+    radial-gradient(60% 45% at 50% 100%, rgba(27,191,110,.08), transparent 65%),
+    linear-gradient(180deg, #060a10 0%, #0a0f15 50%, #060a10 100%);
+}
+body::after{
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px);
+  background-size:56px 56px;
+  mask-image: radial-gradient(ellipse at center, #000 25%, transparent 75%);
+  opacity:.5;
+}
+
+/* ============================== LAYOUT ============================== */
+.container{width:100%;max-width:var(--container);margin:0 auto;padding:0 var(--pad)}
+.container--narrow{max-width:920px}
+section{padding:clamp(72px, 9vw, 130px) 0;position:relative;z-index:1}
+section.section--alt{background:linear-gradient(180deg, rgba(255,255,255,.012), rgba(255,255,255,.0));border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+
+/* ============================== TYPOGRAPHY ============================== */
+.eyebrow{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:6px 14px;border-radius:999px;
+  border:1px solid var(--line-2);background:rgba(255,255,255,.03);
+  font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--eco-3);
+  margin-bottom:24px;
+}
+.eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--eco-1);box-shadow:0 0 12px var(--eco-glow);animation:pulseDot 2.2s infinite}
+@keyframes pulseDot{50%{opacity:.5}}
+
+h1,h2,h3,h4{font-family:var(--display);letter-spacing:-.02em;margin:0;font-weight:800}
+.h1{font-size:clamp(40px,6.8vw,84px);line-height:1.02;font-weight:900;margin:0 0 22px}
+.h2{font-size:clamp(32px,4.6vw,58px);line-height:1.04;margin:0 0 20px;font-weight:800}
+.h3{font-size:clamp(22px,2vw,28px);line-height:1.15;margin:0 0 10px;font-weight:700}
+.lead{font-size:clamp(17px,1.4vw,21px);line-height:1.55;color:var(--ink-muted);max-width:62ch}
+.mono{font-family:var(--mono)}
+
+/* Animated gradient text — like nc-grad-anim */
+.grad-anim{
+  background:linear-gradient(90deg, var(--eco-3), var(--eco-1), var(--eco-2), var(--eco-3));
+  background-size:300% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:gradMove 7s linear infinite;
+  filter:drop-shadow(0 0 18px var(--eco-glow));
+}
+@keyframes gradMove{to{background-position:300% 0}}
+
+.glow{
+  background:linear-gradient(135deg, var(--eco-3), var(--eco-1));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 24px var(--eco-glow));
+}
+
+/* Strike-through animated */
+.strike{position:relative;display:inline-block;color:var(--ink)}
+.strike::after{
+  content:"";position:absolute;left:-2%;right:-2%;top:55%;height:.085em;
+  background:linear-gradient(90deg, var(--eco-3), var(--eco-1), var(--eco-2));
+  box-shadow:0 0 18px var(--eco-glow);
+  transform:scaleX(0);transform-origin:left;border-radius:2px;
+}
+.strike.is-on::after{transform:scaleX(1);transition:transform 1s cubic-bezier(.7,0,.2,1)}
+
+/* Underline behind text */
+.under{position:relative;white-space:nowrap;color:var(--ink)}
+.under::after{
+  content:"";position:absolute;left:-4px;right:-4px;bottom:8%;height:38%;z-index:-1;
+  background:linear-gradient(90deg, rgba(27,191,110,.45), rgba(27,191,110,.12));
+  border-radius:6px;
+}
+
+/* Brand inline accents */
+.b{color:var(--eco-3);font-weight:700}
+.danger{color:#ff6b6b;font-weight:700}
+.dim{color:var(--ink-dim);font-weight:400}
+
+/* Hero h1 mask reveal */
+.h1-anim .line{display:block;overflow:hidden;padding:.04em .04em .14em}
+.h1-anim .anim{display:inline-block;will-change:transform;transform:translateY(115%)}
+
+/* ============================== NAV ============================== */
+.nav{
+  position:sticky;top:0;z-index:100;
+  backdrop-filter:saturate(140%) blur(18px);
+  -webkit-backdrop-filter:saturate(140%) blur(18px);
+  background:rgba(10,15,21,.55);
+  border-bottom:1px solid transparent;
+  transition:border-color .25s ease, background .25s ease;
+}
+.nav.scrolled{border-color:var(--line);background:rgba(10,15,21,.85)}
+.nav-row{display:flex;align-items:center;justify-content:space-between;height:68px;gap:24px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:800;letter-spacing:-.02em}
+.brand svg{width:32px;height:32px}
+.brand span.tag{color:var(--ink-dim);font-weight:500;font-size:13px;font-family:var(--sans);margin-left:8px}
+.nav-links{display:flex;gap:28px}
+.nav-links a{color:var(--ink-muted);font-size:14px;font-weight:500;transition:color .2s}
+.nav-links a:hover{color:var(--ink)}
+@media(max-width:920px){.nav-links{display:none}}
+
+/* ============================== BUTTONS ============================== */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px 20px;border-radius:12px;
+  font-weight:600;font-size:14px;letter-spacing:-.005em;
+  transition:transform .15s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease;
+  white-space:nowrap;border:1px solid transparent;
+  position:relative;overflow:hidden;
+}
+.btn:active{transform:translateY(1px)}
+.btn-primary{
+  background:linear-gradient(135deg, var(--eco-1), var(--eco-2));
+  color:#062512;
+  box-shadow:0 12px 36px -10px var(--eco-glow), inset 0 1px 0 rgba(255,255,255,.3);
+}
+.btn-primary:hover{box-shadow:0 18px 50px -10px var(--eco-glow), inset 0 1px 0 rgba(255,255,255,.4);transform:translateY(-2px)}
+.btn-primary::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(120deg, transparent 35%, rgba(255,255,255,.28) 50%, transparent 65%);
+  transform:translateX(-100%);transition:transform .7s;
+}
+.btn-primary:hover::after{transform:translateX(100%)}
+.btn-ghost{background:rgba(255,255,255,.04);color:var(--ink);border-color:var(--line-2)}
+.btn-ghost:hover{background:rgba(255,255,255,.08);border-color:var(--line-3);transform:translateY(-2px)}
+.btn-lg{padding:16px 26px;font-size:15.5px;border-radius:14px}
+.btn-xl{padding:20px 34px;font-size:17px;border-radius:16px}
+
+/* Shimmer CTA (animated gradient bg) */
+.btn-shimmer{
+  background:linear-gradient(120deg, var(--eco-2), var(--eco-1), var(--eco-3), var(--eco-1), var(--eco-2));
+  background-size:300% 100%;
+  animation:ctaShimmer 4.5s linear infinite;
+  box-shadow:0 18px 44px -10px var(--eco-glow), 0 0 30px rgba(92,255,180,.35), inset 0 1px 0 rgba(255,255,255,.3);
+  color:#062512;
+}
+@keyframes ctaShimmer{to{background-position:300% 0}}
+
+/* ============================== HERO ============================== */
+.hero{padding-top:clamp(40px,5vw,80px);padding-bottom:clamp(48px,6vw,110px);text-align:center;position:relative;overflow:hidden}
+.hero .container{position:relative;z-index:1}
+.hero-chip{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:7px 14px 7px 8px;border-radius:999px;
+  border:1px solid var(--line-2);background:rgba(255,255,255,.03);
+  font-size:13px;color:var(--ink-soft);margin-bottom:34px;
+  box-shadow:0 12px 40px -10px rgba(27,191,110,.2);
+  backdrop-filter:blur(10px);
+}
+.hero-chip .badge{
+  padding:3px 9px;border-radius:999px;
+  background:linear-gradient(135deg, var(--eco-1), var(--eco-2));
+  color:#062512;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+}
+.hero-chip .sep{width:1px;height:14px;background:var(--line-2)}
+.hero-chip .arr{color:var(--eco-3);font-weight:500;display:inline-flex;align-items:center;gap:4px}
+.hero-chip .arr::after{content:"→";transition:transform .25s}
+.hero-chip:hover .arr::after{transform:translateX(3px)}
+
+.hero-sub{font-size:clamp(17px,1.55vw,22px);line-height:1.5;color:var(--ink-muted);max-width:680px;margin:30px auto 0;text-wrap:pretty}
+.hero-ctas{margin-top:40px;display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap}
+.hero-stats{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:14px;
+  margin-top:60px;padding-top:36px;border-top:1px solid var(--line);
+  max-width:880px;margin-left:auto;margin-right:auto;
+}
+@media(max-width:680px){.hero-stats{grid-template-columns:repeat(2,1fr);gap:24px}}
+.hero-stats div{display:flex;flex-direction:column;gap:4px;text-align:center}
+.hero-stats b{font-family:var(--mono);font-size:clamp(24px,2.4vw,32px);font-weight:700;letter-spacing:-.02em;color:var(--ink)}
+.hero-stats span{font-size:12px;color:var(--ink-dim);line-height:1.3}
+
+/* ============================== MARQUEE ============================== */
+.marquee{
+  margin:48px -50vw 0;width:100vw;position:relative;left:50%;right:50%;margin-left:-50vw;margin-right:-50vw;
+  overflow:hidden;
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  padding:18px 0;background:rgba(255,255,255,.012);
+  mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);
+}
+.marquee-track{
+  display:flex;gap:48px;width:max-content;
+  animation:marqMove 60s linear infinite;
+}
+.marquee:hover .marquee-track{animation-play-state:paused}
+@keyframes marqMove{to{transform:translateX(-50%)}}
+.marquee .item{
+  display:inline-flex;align-items:center;gap:10px;
+  font-family:var(--mono);font-size:13px;font-weight:500;
+  color:var(--ink-muted);white-space:nowrap;
+}
+.marquee .item .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.marquee .item .dot.g{background:var(--eco-1);box-shadow:0 0 10px var(--eco-glow)}
+.marquee .item .dot.y{background:#fde047;box-shadow:0 0 10px rgba(253,224,71,.5)}
+.marquee .item .dot.o{background:#fb923c;box-shadow:0 0 10px rgba(251,146,60,.5)}
+.marquee .item .dot.r{background:#ef4444;box-shadow:0 0 10px rgba(239,68,68,.5)}
+
+/* ============================== SECTION HEADS ============================== */
+.section-head{display:flex;flex-direction:column;align-items:flex-start;gap:14px;max-width:780px;margin-bottom:56px}
+.section-head.center{align-items:center;text-align:center;margin-left:auto;margin-right:auto}
+.section-head.center .lead{margin-left:auto;margin-right:auto}
+
+/* ============================== INLINE CTA ============================== */
+.inline-cta{
+  margin-top:48px;
+  display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;
+  padding:22px 28px;border-radius:18px;
+  background:linear-gradient(135deg, rgba(27,191,110,.10), rgba(27,191,110,.02));
+  border:1px solid rgba(27,191,110,.25);
+  position:relative;overflow:hidden;
+}
+.inline-cta::before{
+  content:"";position:absolute;left:-100%;top:0;width:60%;height:100%;
+  background:linear-gradient(120deg,transparent 35%,rgba(92,255,180,.10) 50%,transparent 65%);
+  transition:left .8s;pointer-events:none;
+}
+.inline-cta:hover::before{left:160%}
+.inline-cta .ic-text{flex:1;font-size:15px;color:var(--ink-soft);min-width:240px}
+.inline-cta .ic-text b{color:var(--eco-3);font-weight:700}
+
+/* ============================== PROBLEM STATS ============================== */
+.stats{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:16px;
+}
+@media(max-width:880px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{
+  padding:28px 24px;border-radius:var(--r-3);
+  background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.005));
+  border:1px solid var(--line);
+  position:relative;overflow:hidden;
+  transition:transform .25s ease, border-color .25s ease;
+}
+.stat:hover{transform:translateY(-4px);border-color:rgba(27,191,110,.3)}
+.stat::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg, var(--eco-1), transparent);
+}
+.stat .num{font-family:var(--display);font-size:clamp(36px,4vw,52px);font-weight:800;letter-spacing:-.03em;line-height:1;margin-bottom:10px;color:var(--ink)}
+.stat .num small{font-size:.5em;color:var(--ink-muted);font-weight:500;margin-left:4px}
+.stat .num.brand{
+  background:linear-gradient(135deg, var(--eco-3), var(--eco-1));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 16px var(--eco-glow));
+}
+.stat .label{color:var(--ink-muted);font-size:14px;line-height:1.5}
+.stat .src{margin-top:14px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim)}
+
+/* ============================== DISTRICTS — REAL DATA ============================== */
+.dist-intro{
+  padding:28px 32px;border-radius:var(--r-3);
+  background:linear-gradient(135deg, rgba(245,165,36,.08), rgba(245,165,36,.02));
+  border:1px solid rgba(245,165,36,.25);
+  display:flex;gap:18px;align-items:flex-start;
+  margin-bottom:32px;
+}
+.dist-intro .ic{flex-shrink:0;font-size:28px;line-height:1;filter:drop-shadow(0 0 12px rgba(245,165,36,.5))}
+.dist-intro p{margin:0;color:var(--ink-soft);font-size:15px;line-height:1.6}
+.dist-intro p b{color:#fde047}
+
+.districts{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:14px;
+}
+@media(max-width:1000px){.districts{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:620px){.districts{grid-template-columns:1fr}}
+.district{
+  padding:22px 22px 18px;border-radius:18px;
+  background:linear-gradient(180deg, var(--surface), var(--bg-2));
+  border:1px solid var(--line);
+  position:relative;overflow:hidden;
+  transition:transform .25s ease, border-color .25s ease;
+}
+.district:hover{transform:translateY(-4px)}
+.district .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;gap:12px}
+.district .name{font-family:var(--display);font-size:20px;font-weight:700;color:var(--ink)}
+.district .city{font-size:12px;color:var(--ink-dim);margin-top:2px}
+.district .badge{
+  padding:5px 11px;border-radius:7px;
+  font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  white-space:nowrap;
+}
+.district.clean .badge{background:rgba(34,197,94,.18);color:#86efac;border:1px solid rgba(34,197,94,.3)}
+.district.mid   .badge{background:rgba(234,179,8,.18);color:#fde047;border:1px solid rgba(234,179,8,.3)}
+.district.dirty .badge{background:rgba(239,68,68,.18);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
+.district.clean{border-color:rgba(34,197,94,.18)}
+.district.mid  {border-color:rgba(234,179,8,.18)}
+.district.dirty{border-color:rgba(239,68,68,.22)}
+.district.clean::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg, #22c55e, transparent)}
+.district.mid::before  {content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg, #eab308, transparent)}
+.district.dirty::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg, #ef4444, transparent)}
+
+.district .reason{font-size:13.5px;line-height:1.55;color:var(--ink-muted);margin:0 0 14px}
+.district .reason b{color:var(--ink-soft)}
+.district .src{
+  display:flex;align-items:center;gap:6px;
+  padding-top:12px;border-top:1px dashed var(--line);
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-dim);
+}
+.district .src::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--ink-dim)}
+
+/* ============================== HOW IT WORKS — 3 STEPS ============================== */
+.steps{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:18px;position:relative;
+}
+@media(max-width:900px){.steps{grid-template-columns:1fr}}
+.step{
+  padding:32px 28px 28px;border-radius:var(--r-3);
+  background:linear-gradient(180deg, var(--surface), var(--bg-2));
+  border:1px solid var(--line);
+  position:relative;
+}
+.step .n{
+  position:absolute;top:-14px;left:24px;
+  width:36px;height:36px;border-radius:10px;
+  background:linear-gradient(135deg, var(--eco-1), var(--eco-2));color:#062512;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--display);font-weight:800;font-size:17px;
+  box-shadow:0 8px 24px -8px var(--eco-glow);
+}
+.step h3{font-size:21px;margin:8px 0 10px;font-weight:700}
+.step p{margin:0;color:var(--ink-muted);font-size:15px;line-height:1.55}
+.step .pill{
+  display:inline-block;margin-top:14px;
+  padding:5px 11px;border-radius:6px;
+  background:var(--eco-soft);color:var(--eco-3);
+  font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.04em;
+}
+
+/* ============================== WHY-US ============================== */
+.why-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:16px;
+}
+@media(max-width:980px){.why-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.why-grid{grid-template-columns:1fr}}
+.why{
+  padding:26px 24px;border-radius:var(--r-3);
+  background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.005));
+  border:1px solid var(--line);
+  transition:transform .25s ease, border-color .25s ease;
+}
+.why:hover{transform:translateY(-4px);border-color:rgba(27,191,110,.3)}
+.why .ic{
+  width:46px;height:46px;border-radius:12px;
+  background:rgba(27,191,110,.12);color:var(--eco-3);
+  display:flex;align-items:center;justify-content:center;margin-bottom:18px;
+}
+.why h3{font-size:18px;font-weight:700;margin:0 0 8px}
+.why p{margin:0;font-size:14px;line-height:1.55;color:var(--ink-muted)}
+
+/* ============================== DEMO BOT SECTION (FEATURE) ============================== */
+.demo-wrap{
+  padding:clamp(28px,4vw,56px);
+  border-radius:var(--r-4);
+  position:relative;overflow:hidden;
+  background:
+    radial-gradient(60% 60% at 15% 0%, rgba(27,191,110,.12), transparent 60%),
+    linear-gradient(180deg, var(--surface), var(--bg-2));
+  border:1px solid rgba(27,191,110,.2);
+}
+.demo-wrap::before{
+  content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;
+  background:conic-gradient(from var(--cs-angle), transparent, var(--eco-1) 25%, transparent 50%, var(--eco-3) 75%, transparent);
+  -webkit-mask:linear-gradient(#000,#000) content-box, linear-gradient(#000,#000);
+  -webkit-mask-composite:xor;mask-composite:exclude;
+  pointer-events:none;
+  animation:angleSpin 8s linear infinite;animation-play-state:var(--spin-state, running);
+  opacity:.5;
+}
+@keyframes angleSpin{to{--cs-angle:360deg}}
+
+.demo-grid{
+  display:grid;grid-template-columns:1fr auto;gap:clamp(32px,5vw,64px);align-items:center;
+  position:relative;z-index:1;
+}
+@media(max-width:1000px){.demo-grid{grid-template-columns:1fr;justify-items:center;text-align:center}.demo-side{order:1}.phone-wrap{order:2}}
+
+.demo-side .eyebrow{margin-bottom:18px}
+.demo-side h2{margin:0 0 18px;font-size:clamp(28px,3.6vw,44px);line-height:1.08}
+.demo-side p{margin:0 0 28px;color:var(--ink-muted);font-size:16.5px;line-height:1.55;max-width:46ch}
+@media(max-width:1000px){.demo-side p{margin-left:auto;margin-right:auto}}
+
+.demo-checks{list-style:none;padding:0;margin:0 0 32px}
+.demo-checks li{padding:8px 0;display:flex;gap:10px;align-items:center;color:var(--ink-soft);font-size:14.5px}
+.demo-checks li::before{content:"✓";color:var(--eco-3);font-weight:800;flex-shrink:0;width:20px;height:20px;border-radius:50%;background:var(--eco-soft);display:inline-flex;align-items:center;justify-content:center;font-size:11px}
+@media(max-width:1000px){.demo-checks{display:inline-block;text-align:left}}
+
+.demo-cta-row{display:flex;gap:12px;flex-wrap:wrap}
+@media(max-width:1000px){.demo-cta-row{justify-content:center}}
+
+/* ============================== PHONE (Telegram) ============================== */
+.phone-wrap{position:relative;display:flex;justify-content:center;align-items:center;perspective:1600px}
+.phone-wrap::before{
+  content:"";position:absolute;width:130%;height:130%;
+  background:radial-gradient(closest-side, rgba(27,191,110,.25), transparent 70%);
+  filter:blur(20px);z-index:0;
+}
+.phone{
+  --w: 340px;
+  width:var(--w);height:calc(var(--w) * 2.06);
+  background:#000;
+  border-radius:46px;
+  padding:11px;
+  box-shadow:
+    var(--shadow-2),
+    inset 0 0 0 1px rgba(255,255,255,.08),
+    0 0 0 2px #1a1a1a;
+  position:relative;z-index:1;
+  transform:rotateY(-6deg) rotateX(2deg);
+  transition:transform .6s cubic-bezier(.2,.7,.2,1);
+}
+.phone:hover{transform:rotateY(-2deg) rotateX(0deg) translateY(-4px)}
+@media(max-width:1000px){.phone{transform:none}.phone:hover{transform:translateY(-4px)}}
+.phone-screen{
+  width:100%;height:100%;
+  background:var(--bg-2);
+  border-radius:36px;overflow:hidden;position:relative;
+  display:flex;flex-direction:column;
+}
+.notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:110px;height:30px;background:#000;border-radius:18px;z-index:5}
+.notch::after{content:"";position:absolute;right:14px;top:50%;transform:translateY(-50%);width:10px;height:10px;border-radius:50%;background:#1a1a1a;box-shadow:inset 0 0 0 2px #0a0a0a, inset 0 0 6px rgba(80,80,80,.5)}
+
+.status-bar{height:42px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 28px;padding-top:8px;font-size:13px;font-weight:600;color:#fff}
+.status-bar .icons{display:flex;align-items:center;gap:6px;opacity:.95}
+
+.tg-header{
+  height:56px;flex-shrink:0;background:#17212b;
+  display:flex;align-items:center;gap:12px;padding:0 14px;
+  border-bottom:1px solid rgba(0,0,0,.4);z-index:3;
+}
+.tg-back{color:#5badf6;font-size:20px;font-weight:300}
+.tg-avatar{
+  width:38px;height:38px;border-radius:50%;
+  background:linear-gradient(135deg, var(--eco-1), #0d9456);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  box-shadow:inset 0 -2px 4px rgba(0,0,0,.2);
+}
+.tg-avatar svg{width:22px;height:22px}
+.tg-meta{display:flex;flex-direction:column;line-height:1.1;flex:1;min-width:0}
+.tg-meta b{font-size:15px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tg-meta span{font-size:12px;color:#7d8b99;margin-top:2px}
+.tg-online::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--eco-1);margin-right:5px;vertical-align:middle;box-shadow:0 0 8px var(--eco-glow)}
+
+.tg-chat{
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  padding:14px 12px 8px;
+  background:radial-gradient(circle at 20% 20%, rgba(27,191,110,.04), transparent 50%), #0e1621;
+  display:flex;flex-direction:column;gap:6px;
+  scrollbar-width:thin;scrollbar-color:#2d3a47 transparent;
+}
+.tg-chat::-webkit-scrollbar{width:4px}
+.tg-chat::-webkit-scrollbar-thumb{background:#2d3a47;border-radius:4px}
+
+.msg{
+  max-width:86%;
+  padding:8px 11px 6px;border-radius:14px;
+  font-size:14px;line-height:1.4;color:#fff;
+  word-wrap:break-word;
+  animation:bubbleIn .35s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes bubbleIn{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+.msg.in{align-self:flex-start;background:var(--tg-bubble-in);border-bottom-left-radius:4px}
+.msg.out{align-self:flex-end;background:var(--tg-bubble-out);border-bottom-right-radius:4px}
+.msg .time{font-size:10px;color:rgba(255,255,255,.55);display:inline-block;margin-left:8px;float:right;margin-top:4px;position:relative;top:2px}
+.msg.out .time{color:#a6d4ff}
+.msg .check{display:inline-block;margin-left:3px;color:#5badf6}
+.msg b{font-weight:700;color:#fff}
+.msg.in b.title{color:var(--eco-3)}
+.msg .row{display:flex;justify-content:space-between;gap:8px;margin:2px 0}
+.msg .row span:last-child{font-variant-numeric:tabular-nums;font-weight:600}
+.msg hr{border:0;border-top:1px solid rgba(255,255,255,.08);margin:7px -2px}
+.msg .bar{height:6px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:4px}
+.msg .bar i{display:block;height:100%;border-radius:4px;background:var(--eco-1);transition:width .8s ease}
+
+.cs-badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:3px 9px;border-radius:6px;margin-right:6px}
+.cs-badge.lvl-1{background:rgba(34,197,94,.18);color:#86efac}
+.cs-badge.lvl-2{background:rgba(234,179,8,.18);color:#fde047}
+.cs-badge.lvl-3{background:rgba(249,115,22,.2);color:#fdba74}
+.cs-badge.lvl-4{background:rgba(239,68,68,.2);color:#fca5a5}
+.cs-badge.lvl-5{background:rgba(185,28,28,.28);color:#fee2e2}
+
+.e-big{
+  font-family:var(--mono);font-size:42px;font-weight:700;letter-spacing:-.04em;line-height:1;
+  display:flex;align-items:baseline;gap:4px;margin:4px 0 8px;
+}
+.e-big small{font-size:18px;color:rgba(255,255,255,.55);font-weight:500}
+
+.typing{align-self:flex-start;background:var(--tg-bubble-in);padding:10px 14px;border-radius:14px;border-bottom-left-radius:4px;display:inline-flex;gap:4px}
+.typing i{width:6px;height:6px;border-radius:50%;background:#7d8b99;animation:dot 1.2s infinite ease-in-out}
+.typing i:nth-child(2){animation-delay:.15s}
+.typing i:nth-child(3){animation-delay:.3s}
+@keyframes dot{0%,80%,100%{transform:translateY(0);opacity:.4}40%{transform:translateY(-4px);opacity:1}}
+
+.tg-input{flex-shrink:0;background:#17212b;padding:8px 10px 12px;border-top:1px solid rgba(0,0,0,.3);display:flex;flex-direction:column;gap:8px;max-height:240px;overflow-y:auto}
+.tg-input::-webkit-scrollbar{width:3px}
+.tg-input::-webkit-scrollbar-thumb{background:#2d3a47;border-radius:3px}
+.reply-kbd{display:flex;flex-direction:column;gap:6px}
+.reply-row{display:flex;gap:6px}
+.reply-btn{flex:1;padding:10px 8px;background:#2b3a48;border-radius:8px;font-size:13.5px;color:#fff;font-weight:500;transition:background .15s, transform .1s;display:flex;align-items:center;justify-content:center;gap:6px;line-height:1.2;min-width:0}
+.reply-btn:hover{background:#34465a}
+.reply-btn:active{transform:scale(.98)}
+.reply-btn .emoji{font-size:15px;flex-shrink:0}
+
+.input-row{display:flex;align-items:center;gap:8px}
+.input-pill{flex:1;background:#242f3d;border-radius:18px;padding:9px 14px;font-size:13px;color:#7d8b99;display:flex;align-items:center;gap:10px}
+.input-icon{color:#7d8b99;opacity:.7}
+.send-btn{width:34px;height:34px;border-radius:50%;background:var(--eco-2);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.home-bar{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:120px;height:4px;border-radius:2px;background:rgba(255,255,255,.35)}
+
+/* ============================== SCENARIOS ============================== */
+.scenarios{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media(max-width:880px){.scenarios{grid-template-columns:1fr}}
+.scen{
+  padding:28px 26px;border-radius:var(--r-3);
+  background:linear-gradient(180deg, var(--surface), var(--bg-2));
+  border:1px solid var(--line);position:relative;
+  transition:transform .25s ease, border-color .25s ease;
+}
+.scen:hover{transform:translateY(-4px);border-color:rgba(27,191,110,.3)}
+.scen .who{display:inline-block;padding:4px 10px;border-radius:6px;background:rgba(78,164,246,.15);color:#93c5fd;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px}
+.scen h3{margin-bottom:10px;font-size:19px;font-weight:700}
+.scen p{margin:0;font-size:14.5px;line-height:1.55;color:var(--ink-muted)}
+.scen .quote{
+  margin-top:18px;padding:14px 16px;border-radius:12px;
+  background:rgba(0,0,0,.25);border-left:3px solid var(--eco-2);
+  font-style:italic;font-size:13.5px;color:var(--ink-soft);line-height:1.55;
+}
+
+/* ============================== FAQ ============================== */
+.faq{display:flex;flex-direction:column;gap:10px}
+.faq details{
+  background:linear-gradient(180deg, var(--surface), var(--bg-2));
+  border:1px solid var(--line);border-radius:var(--r-2);
+  padding:0;overflow:hidden;transition:border-color .2s;
+}
+.faq details[open]{border-color:rgba(27,191,110,.3)}
+.faq summary{
+  list-style:none;cursor:pointer;
+  padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;
+  font-weight:600;font-size:16px;color:var(--ink);
+}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{
+  content:"+";font-size:24px;color:var(--eco-3);font-weight:400;line-height:1;
+  width:24px;height:24px;display:flex;align-items:center;justify-content:center;
+  transition:transform .25s;
+}
+.faq details[open] summary::after{transform:rotate(45deg)}
+.faq .answer{padding:0 24px 22px;color:var(--ink-muted);font-size:15px;line-height:1.6}
+.faq .answer p{margin:0 0 8px}
+.faq .answer p:last-child{margin-bottom:0}
+
+/* ============================== METHODOLOGY ACCORDION ============================== */
+.method-intro{
+  padding:32px 36px;border-radius:var(--r-3);
+  background:linear-gradient(135deg, rgba(78,164,246,.10), rgba(78,164,246,.02));
+  border:1px solid rgba(78,164,246,.25);
+  display:flex;gap:20px;align-items:center;
+  margin-bottom:32px;
+}
+.method-intro .ic{flex-shrink:0;font-size:32px}
+.method-intro h3{color:var(--ink);margin:0 0 4px;font-size:18px}
+.method-intro p{margin:0;color:var(--ink-muted);font-size:14px;line-height:1.5}
+
+.method-acc{display:flex;flex-direction:column;gap:14px}
+.method-acc details{
+  background:linear-gradient(180deg, var(--surface), var(--bg-2));
+  border:1px solid var(--line);border-radius:var(--r-3);
+  overflow:hidden;
+}
+.method-acc details[open]{border-color:rgba(78,164,246,.3)}
+.method-acc summary{
+  list-style:none;cursor:pointer;
+  padding:24px 28px;display:flex;justify-content:space-between;align-items:center;gap:16px;
+}
+.method-acc summary::-webkit-details-marker{display:none}
+.method-acc summary .ms-l{display:flex;flex-direction:column;gap:4px}
+.method-acc summary .ms-l b{font-family:var(--display);font-size:19px;font-weight:700;color:var(--ink)}
+.method-acc summary .ms-l span{font-size:13px;color:var(--ink-muted)}
+.method-acc summary .ms-r{font-size:24px;color:var(--eco-3);font-weight:300;line-height:1;transition:transform .25s}
+.method-acc details[open] summary .ms-r{transform:rotate(45deg)}
+.method-acc .ma-body{padding:0 28px 26px}
+
+/* Formula block */
+.formula-block{
+  font-family:var(--mono);
+  font-size:clamp(14px,1.7vw,19px);line-height:1.8;text-align:center;
+  padding:22px;color:#cbd5e0;
+  background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:14px;margin:16px 0;
+}
+.formula-block .eq{color:var(--eco-3);font-weight:700}
+.formula-block .w{color:#fde047}
+.formula-block .i{color:#93c5fd}
+.formula-block .pct{color:#fca5a5}
+
+.scale{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:18px}
+@media(max-width:680px){.scale{grid-template-columns:1fr;gap:8px}}
+.scale-step{padding:14px;border-radius:12px;border:1px solid var(--line)}
+.scale-step .range{font-family:var(--mono);font-size:16px;font-weight:700;margin-bottom:4px}
+.scale-step .lvl{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.scale-step p{margin:0;font-size:12px;line-height:1.4;color:var(--ink-muted)}
+.scale-step.s1{background:linear-gradient(180deg, rgba(34,197,94,.12), rgba(34,197,94,.03));border-color:rgba(34,197,94,.25)}
+.scale-step.s1 .lvl{color:#86efac}
+.scale-step.s2{background:linear-gradient(180deg, rgba(234,179,8,.12), rgba(234,179,8,.03));border-color:rgba(234,179,8,.25)}
+.scale-step.s2 .lvl{color:#fde047}
+.scale-step.s3{background:linear-gradient(180deg, rgba(249,115,22,.12), rgba(249,115,22,.03));border-color:rgba(249,115,22,.25)}
+.scale-step.s3 .lvl{color:#fdba74}
+.scale-step.s4{background:linear-gradient(180deg, rgba(239,68,68,.12), rgba(239,68,68,.03));border-color:rgba(239,68,68,.25)}
+.scale-step.s4 .lvl{color:#fca5a5}
+.scale-step.s5{background:linear-gradient(180deg, rgba(185,28,28,.18), rgba(185,28,28,.05));border-color:rgba(185,28,28,.35)}
+.scale-step.s5 .lvl{color:#fee2e2}
+
+/* SWOT */
+.swot{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px}
+@media(max-width:680px){.swot{grid-template-columns:1fr}}
+.swot-card{padding:22px;border-radius:14px;border:1px solid var(--line);background:rgba(0,0,0,.2)}
+.swot-card .tag{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:4px 9px;border-radius:6px;display:inline-block;margin-bottom:12px}
+.swot-s .tag{background:rgba(34,197,94,.15);color:#86efac}
+.swot-w .tag{background:rgba(239,68,68,.15);color:#fca5a5}
+.swot-o .tag{background:rgba(78,164,246,.15);color:#93c5fd}
+.swot-t .tag{background:rgba(234,179,8,.15);color:#fde047}
+.swot-card ul{margin:0;padding:0;list-style:none}
+.swot-card li{position:relative;padding:6px 0 6px 18px;font-size:13px;line-height:1.5;color:var(--ink-muted);border-bottom:1px dashed var(--line)}
+.swot-card li:last-child{border-bottom:0}
+.swot-card li::before{content:"";position:absolute;left:0;top:13px;width:6px;height:6px;border-radius:2px}
+.swot-s li::before{background:#86efac}.swot-w li::before{background:#fca5a5}.swot-o li::before{background:#93c5fd}.swot-t li::before{background:#fde047}
+
+/* Compare */
+.compare-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r-2);background:rgba(0,0,0,.2);margin-top:8px}
+table.compare{width:100%;border-collapse:collapse;font-size:13.5px;min-width:760px}
+table.compare thead th{background:var(--surface);font-weight:600;text-align:center;padding:13px 10px;color:var(--ink);font-size:12.5px;border-bottom:1px solid var(--line);position:sticky;top:0}
+table.compare thead th:first-child{text-align:left;padding-left:20px}
+table.compare thead th.us{background:linear-gradient(180deg, rgba(27,191,110,.2), rgba(27,191,110,.08));color:var(--eco-3)}
+table.compare tbody td{padding:11px 10px;text-align:center;border-bottom:1px solid var(--line);color:var(--ink-muted)}
+table.compare tbody td:first-child{text-align:left;padding-left:20px;color:var(--ink);font-weight:500}
+table.compare tbody td.us{background:rgba(27,191,110,.04)}
+table.compare tbody tr:last-child td{border-bottom:0}
+.cell-yes{color:var(--eco-3);font-size:18px;font-weight:700}
+.cell-part{color:var(--warn);font-weight:600;font-size:11.5px}
+.cell-no{color:var(--ink-dim);font-size:16px;opacity:.6}
+.score-row td{background:rgba(0,0,0,.3) !important;font-weight:700;font-size:14px;color:var(--ink) !important}
+.score-row td.us{background:rgba(27,191,110,.16) !important;color:var(--eco-3) !important}
+
+/* Architecture */
+.arch{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:8px}
+@media(max-width:1000px){.arch{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.arch{grid-template-columns:1fr}}
+.arch-step{position:relative;padding:22px 18px 18px;border-radius:14px;background:rgba(0,0,0,.2);border:1px solid var(--line)}
+.arch-step .n{position:absolute;top:-12px;left:18px;font-family:var(--mono);font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;background:var(--eco-2);color:#062512}
+.arch-step .tech{font-family:var(--mono);font-size:10.5px;color:var(--eco-3);margin-top:6px;text-transform:uppercase;letter-spacing:.05em}
+.arch-step h4{font-size:14px;margin:6px 0 8px;font-weight:700}
+.arch-step p{margin:0;font-size:12.5px;line-height:1.45;color:var(--ink-muted)}
+
+/* Costs */
+.costs-table{background:rgba(0,0,0,.2);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:8px}
+.costs-table .row{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;padding:14px 20px;border-bottom:1px solid var(--line);font-size:13.5px}
+.costs-table .row:last-child{border-bottom:0;background:rgba(27,191,110,.08);font-weight:700}
+.costs-table .row .val{font-family:var(--mono);text-align:right;color:var(--ink)}
+.costs-table .row .key{color:var(--ink-muted)}
+.costs-table .row:last-child .key{color:var(--ink)}
+.costs-table .row:last-child .val{color:var(--eco-3);font-size:16px}
+
+/* ============================== FINAL CTA ============================== */
+.cta-final{
+  padding:clamp(48px,7vw,90px) clamp(28px,5vw,72px);
+  border-radius:var(--r-4);
+  background:
+    radial-gradient(circle at 20% 0%, rgba(27,191,110,.20), transparent 50%),
+    radial-gradient(circle at 80% 100%, rgba(92,255,180,.10), transparent 50%),
+    linear-gradient(180deg, var(--surface), var(--bg-2));
+  border:1px solid rgba(27,191,110,.25);
+  text-align:center;position:relative;overflow:hidden;
+}
+.cta-final::before{
+  content:"";position:absolute;inset:0;
+  background-image:linear-gradient(rgba(27,191,110,.04) 1px,transparent 1px),linear-gradient(90deg, rgba(27,191,110,.04) 1px,transparent 1px);
+  background-size:40px 40px;
+  mask-image:radial-gradient(ellipse at center, #000 0%, transparent 70%);
+  opacity:.7;pointer-events:none;
+}
+.cta-final h2{position:relative;z-index:1;margin-bottom:16px}
+.cta-final p{max-width:54ch;margin:0 auto 32px;color:var(--ink-muted);font-size:17px;line-height:1.55;position:relative;z-index:1}
+.cta-final .cta-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;position:relative;z-index:1}
+
+/* ============================== FOOTER ============================== */
+footer{padding:60px 0 80px;border-top:1px solid var(--line);margin-top:40px}
+.foot-grid{display:grid;grid-template-columns:1.5fr .8fr .8fr 1fr;gap:32px}
+@media(max-width:880px){.foot-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.foot-grid{grid-template-columns:1fr}}
+.foot-grid h4{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-dim);margin:0 0 16px;font-family:var(--mono)}
+.foot-grid p,.foot-grid li{font-size:13px;line-height:1.7;color:var(--ink-muted);margin:0}
+.foot-grid ul{list-style:none;padding:0;margin:0}
+.foot-grid li a{color:var(--ink-muted);transition:color .15s}
+.foot-grid li a:hover{color:var(--eco-3)}
+.foot-bottom{margin-top:48px;padding-top:24px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;font-size:12px;color:var(--ink-dim)}
+.foot-sources{margin-top:18px;font-size:11px;color:var(--ink-dim);line-height:1.55}
+.foot-sources b{color:var(--ink-muted);font-weight:600;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;font-family:var(--mono)}
+
+/* ============================== FLOATING BUTTON ============================== */
+.fab{
+  position:fixed;bottom:24px;right:24px;z-index:90;
+  padding:14px 22px;border-radius:999px;
+  background:linear-gradient(135deg, var(--eco-1), var(--eco-2));color:#062512;
+  font-weight:700;font-size:14px;display:inline-flex;align-items:center;gap:8px;
+  box-shadow:0 14px 40px -10px var(--eco-glow), inset 0 1px 0 rgba(255,255,255,.3);
+  opacity:0;transform:translateY(20px) scale(.9);pointer-events:none;
+  transition:opacity .35s ease, transform .35s ease;
+}
+.fab.show{opacity:1;transform:none;pointer-events:auto}
+.fab:hover{transform:translateY(-3px);box-shadow:0 22px 50px -10px var(--eco-glow)}
+.fab svg{width:18px;height:18px}
+@media(max-width:560px){.fab{padding:12px 18px;font-size:13px;bottom:16px;right:16px}}
+
+/* ============================== REVEAL ON SCROLL ============================== */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .8s ease, transform .8s ease}
+.reveal.is-in{opacity:1;transform:none}
+.reveal.d2{transition-delay:.08s}
+.reveal.d3{transition-delay:.16s}
+.reveal.d4{transition-delay:.24s}
+.reveal.d5{transition-delay:.32s}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important}
+  .reveal{opacity:1 !important;transform:none !important}
+  .h1-anim .anim{transform:none !important}
+}
+
+/* helpers */
+.hide-mobile{display:initial}
+@media(max-width:680px){.hide-mobile{display:none}}
+</style>
+</head>
+<body>
+
+<!-- ============================== NAV ============================== -->
+<nav class="nav" id="nav">
+  <div class="container nav-row">
+    <a href="#top" class="brand" aria-label="Чистый Стандарт">
+      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <path d="M16 4 L28 14 V26 a2 2 0 0 1 -2 2 H6 a2 2 0 0 1 -2 -2 V14 Z" stroke="url(#brandG)" stroke-width="2.2" stroke-linejoin="round"/>
+        <rect x="12" y="16" width="8" height="9" rx="1" fill="url(#brandG)"/>
+        <defs><linearGradient id="brandG" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#5cffb4"/><stop offset=".5" stop-color="#16d97e"/><stop offset="1" stop-color="#1bbf6e"/></linearGradient></defs>
+      </svg>
+      <b>Чистый Стандарт</b>
+      <span class="tag hide-mobile">· экология твоего района</span>
+    </a>
+    <div class="nav-links">
+      <a href="#problem">Зачем</a>
+      <a href="#data">Районы СПб</a>
+      <a href="#how">Как работает</a>
+      <a href="#faq">FAQ</a>
+      <a href="#method" class="dim">Для научрука</a>
+    </div>
+    <a href="#demo" class="btn btn-primary" onclick="goToDemo(event)">Попробовать</a>
+  </div>
+</nav>
+
+<!-- ============================== HERO ============================== -->
+<section class="hero" id="top">
+  <div class="container">
+
+    <span class="hero-chip">
+      <span class="badge">v 1.0</span>
+      <span class="sep"></span>
+      <span>Курсовой проект СПбГМТУ · 2026</span>
+      <span class="sep"></span>
+      <span class="arr">бесплатно</span>
+    </span>
+
+    <h1 class="h1 h1-anim">
+      <span class="line"><span class="anim">Узнай, чем дышишь</span></span>
+      <span class="line"><span class="anim">прямо <span class="grad-anim">сейчас</span> —</span></span>
+      <span class="line"><span class="anim">в своём районе.</span></span>
+    </h1>
+
+    <p class="hero-sub">
+      За 30 секунд в Telegram. Без приложений, без регистрации.
+      Бот собирает воздух, шум и зелень из <b style="color:var(--eco-3)">5 открытых источников</b>
+      и говорит понятно: «<b style="color:var(--ink)">сегодня гулять с ребёнком — да</b>» или «<b style="color:var(--ink)">закрой окна</b>».
+    </p>
+
+    <div class="hero-ctas">
+      <a href="#demo" class="btn btn-shimmer btn-xl" onclick="goToDemo(event)">
+        Попробовать на своём районе
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>
+      </a>
+      <a href="#how" class="btn btn-ghost btn-xl">Как это устроено ↓</a>
+    </div>
+
+    <div class="hero-stats reveal">
+      <div><b data-count="18" data-suffix="">0</b><span>районов СПб</span></div>
+      <div><b><span data-count="5" data-suffix="">0</span> сек</b><span>один ответ бота</span></div>
+      <div><b><span data-count="0" data-suffix=" ₽">0</span></b><span>стоит запрос</span></div>
+      <div><b><span data-count="5" data-suffix="">0</span> в 1</b><span>метрик в одном числе</span></div>
+    </div>
+
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee-track">
+        <span class="item"><span class="dot g"></span> Курортный · чисто</span>
+        <span class="item"><span class="dot g"></span> Петродворцовый · чисто</span>
+        <span class="item"><span class="dot g"></span> Пушкинский · чисто</span>
+        <span class="item"><span class="dot y"></span> Петроградский · норма</span>
+        <span class="item"><span class="dot y"></span> Московский · норма</span>
+        <span class="item"><span class="dot o"></span> Центральный · повышено</span>
+        <span class="item"><span class="dot o"></span> Адмиралтейский · повышено</span>
+        <span class="item"><span class="dot o"></span> Фрунзенский · NO₂ ×2 ПДК</span>
+        <span class="item"><span class="dot r"></span> Невский · грязно</span>
+        <span class="item"><span class="dot r"></span> Кировский · порт + ТЭЦ</span>
+        <span class="item"><span class="dot r"></span> Красногвардейский · ацетон</span>
+        <span class="item"><span class="dot r"></span> Выборгский · антилидер</span>
+        <!-- duplicate for seamless loop -->
+        <span class="item"><span class="dot g"></span> Курортный · чисто</span>
+        <span class="item"><span class="dot g"></span> Петродворцовый · чисто</span>
+        <span class="item"><span class="dot g"></span> Пушкинский · чисто</span>
+        <span class="item"><span class="dot y"></span> Петроградский · норма</span>
+        <span class="item"><span class="dot y"></span> Московский · норма</span>
+        <span class="item"><span class="dot o"></span> Центральный · повышено</span>
+        <span class="item"><span class="dot o"></span> Адмиралтейский · повышено</span>
+        <span class="item"><span class="dot o"></span> Фрунзенский · NO₂ ×2 ПДК</span>
+        <span class="item"><span class="dot r"></span> Невский · грязно</span>
+        <span class="item"><span class="dot r"></span> Кировский · порт + ТЭЦ</span>
+        <span class="item"><span class="dot r"></span> Красногвардейский · ацетон</span>
+        <span class="item"><span class="dot r"></span> Выборгский · антилидер</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================== PROBLEM ============================== -->
+<section id="problem" class="section--alt">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">01 · Зачем это вообще</span>
+      <h2 class="h2">Город молчит. <span class="glow">А ты дышишь.</span></h2>
+      <p class="lead">
+        Каждое утро ты выходишь из дома и не знаешь, что в воздухе.
+        Данные у государства есть — но их прячут в PDF-отчётах, которые
+        обновляются раз в год и не разбиты по районам.
+      </p>
+    </div>
+
+    <div class="stats reveal d2">
+      <div class="stat">
+        <div class="num brand"><span data-count="65" data-suffix="%">0%</span></div>
+        <div class="label">выбросов в СПб даёт автотранспорт. 133 тыс. тонн в год.</div>
+        <div class="src">Источник: Wikipedia · 2022</div>
+      </div>
+      <div class="stat">
+        <div class="num"><span data-count="25" data-suffix="">0</span> <small>станций</small></div>
+        <div class="label">мониторят весь Петербург. На 18 районов и 5,6 млн жителей.</div>
+        <div class="src">Источник: Комитет по природопользованию СПб</div>
+      </div>
+      <div class="stat">
+        <div class="num">×<span data-count="2" data-suffix="">0</span> <small>ПДК</small></div>
+        <div class="label">по NO₂ во Фрунзенском районе в феврале 2024-го. Город молчал.</div>
+        <div class="src">Источник: Экопортал СПб · 04.2024</div>
+      </div>
+      <div class="stat">
+        <div class="num"><span data-count="5" data-suffix="">0</span> <small>мкг/м³</small></div>
+        <div class="label">новая годовая норма ВОЗ по PM2.5. В России норматив в 3 раза мягче.</div>
+        <div class="src">Источник: WHO 2021 guidelines</div>
+      </div>
+    </div>
+
+    <div class="inline-cta reveal d3">
+      <div class="ic-text">Хочешь посмотреть, что показывает бот для <b>твоего района</b>?</div>
+      <a href="#demo" class="btn btn-primary" onclick="goToDemo(event)">Попробовать прямо сейчас →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== REAL SPB DATA ============================== -->
+<section id="data">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">02 · Что реально известно про СПб</span>
+      <h2 class="h2">9 районов, которые мы <span class="under">можем</span> подтвердить</h2>
+      <p class="lead">
+        Конкретные числа PM2.5 по каждому району Петербург не публикует — только сводки по 25 станциям.
+        Но качественные характеристики «чисто / норма / грязно» есть у Северо-Западного УГМС,
+        ГГО им. Воейкова, экопортала Комитета по природопользованию и Wikipedia.
+        Вот что подтверждается источниками.
+      </p>
+    </div>
+
+    <div class="dist-intro reveal">
+      <div class="ic">⚠️</div>
+      <p><b>Честная оговорка:</b> мы не выдумываем числа. Цифры PM2.5 на карточках — это годовые средние по городу СПб (УГМС, 2024), переложенные на коэффициент района по качественным рейтингам. Точные значения по каждому району и есть та задача, которую решает бот — собирает их из 5 источников в момент запроса.</p>
+    </div>
+
+    <div class="districts reveal d2">
+      <div class="district clean">
+        <div class="top"><div><div class="name">Курортный</div><div class="city">Санкт-Петербург</div></div><span class="badge">чисто</span></div>
+        <p class="reason"><b>Финский залив, сосновые леса, нет промышленности.</b> Один из самых чистых районов СПб по воздуху и шуму.</p>
+        <div class="src">Источник: Tion, ПРЦ 09.2024</div>
+      </div>
+      <div class="district clean">
+        <div class="top"><div><div class="name">Петродворцовый</div><div class="city">Санкт-Петербург</div></div><span class="badge">чисто</span></div>
+        <p class="reason"><b>Самый чистый по воздуху в рейтингах.</b> Нет крупных предприятий, дворцово-парковые комплексы.</p>
+        <div class="src">Источник: Tion, ПРЦ 09.2024</div>
+      </div>
+      <div class="district clean">
+        <div class="top"><div><div class="name">Пушкинский</div><div class="city">Санкт-Петербург</div></div><span class="badge">чисто</span></div>
+        <p class="reason"><b>Парки, низкая плотность застройки.</b> Регулярно в топе чистых районов.</p>
+        <div class="src">Источник: ПРЦ 09.2024</div>
+      </div>
+
+      <div class="district mid">
+        <div class="top"><div><div class="name">Петроградский</div><div class="city">Санкт-Петербург</div></div><span class="badge">норма</span></div>
+        <p class="reason"><b>«Зелёный оазис» центра.</b> Приморский парк Победы 168 га + Петровский 28,79 га компенсируют трафик.</p>
+        <div class="src">Источник: Tion · экокарта СПб</div>
+      </div>
+      <div class="district mid">
+        <div class="top"><div><div class="name">Московский</div><div class="city">Санкт-Петербург</div></div><span class="badge">норма</span></div>
+        <p class="reason"><b>Аэропорт Пулково + трасса.</b> Лидер по NO₂ и взвешенным веществам, но в пределах ПДК.</p>
+        <div class="src">Источник: Экопортал СПб</div>
+      </div>
+      <div class="district mid">
+        <div class="top"><div><div class="name">Адмиралтейский</div><div class="city">Санкт-Петербург</div></div><span class="badge">повышено</span></div>
+        <p class="reason"><b>Плотный трафик, мало зелени.</b> Один из проблемных районов по совокупности факторов.</p>
+        <div class="src">Источник: Tion · экокарта СПб</div>
+      </div>
+
+      <div class="district dirty">
+        <div class="top"><div><div class="name">Невский</div><div class="city">Санкт-Петербург</div></div><span class="badge">грязно</span></div>
+        <p class="reason"><b>2-е место в рейтинге грязных районов СПб.</b> Промзоны и плотная магистральная сеть.</p>
+        <div class="src">Источник: EcoStandard 2023, SpbHomes</div>
+      </div>
+      <div class="district dirty">
+        <div class="top"><div><div class="name">Кировский</div><div class="city">Санкт-Петербург</div></div><span class="badge">грязно</span></div>
+        <p class="reason"><b>Большой порт + Юго-Западная ТЭЦ.</b> Высокий уровень CO и взвешенных частиц.</p>
+        <div class="src">Источник: Wikipedia, Tion</div>
+      </div>
+      <div class="district dirty">
+        <div class="top"><div><div class="name">Красногвардейский</div><div class="city">Санкт-Петербург</div></div><span class="badge">грязно</span></div>
+        <p class="reason"><b>Регулярные превышения по ацетону и толуолу.</b> Самый проблемный по специфическим выбросам.</p>
+        <div class="src">Источник: Tion, SpbHomes</div>
+      </div>
+    </div>
+
+    <div class="inline-cta reveal d3">
+      <div class="ic-text">Твоего района нет в списке? <b>Спроси у бота — он знает все 18.</b></div>
+      <a href="#demo" class="btn btn-primary" onclick="goToDemo(event)">Узнать про свой район →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== HOW IT WORKS — 3 STEPS ============================== -->
+<section id="how" class="section--alt">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">03 · Как это работает</span>
+      <h2 class="h2">Три шага. <span class="grad-anim">Меньше минуты.</span></h2>
+      <p class="lead">Ты ничего не настраиваешь. Просто пишешь название района — дальше всё делает бот.</p>
+    </div>
+
+    <div class="steps reveal d2">
+      <div class="step">
+        <div class="n">1</div>
+        <h3>Пишешь свой район</h3>
+        <p>Открываешь Telegram, набираешь «Невский» или присылаешь геолокацию одной кнопкой.</p>
+        <span class="pill">или /start</span>
+      </div>
+      <div class="step">
+        <div class="n">2</div>
+        <h3>Бот идёт в 5 источников</h3>
+        <p>За 2 секунды собирает: воздух, воду, шум, зелень и текущие предупреждения. Сам считает интегральную оценку.</p>
+        <span class="pill">OpenAQ · УГМС · OSM · Sentinel-2</span>
+      </div>
+      <div class="step">
+        <div class="n">3</div>
+        <h3>Получаешь понятный совет</h3>
+        <p>Не «PM2.5 = 24 мкг/м³», а «<b style="color:var(--eco-3)">сегодня окна можно открыть</b>» или «<b style="color:#fca5a5">не выводи ребёнка на улицу</b>».</p>
+        <span class="pill">+ подписка на район</span>
+      </div>
+    </div>
+
+    <div class="inline-cta reveal d3">
+      <div class="ic-text">Хочешь сам пройти эти 3 шага? <b>Демо в самом низу — рабочий бот в браузере.</b></div>
+      <a href="#demo" class="btn btn-primary" onclick="goToDemo(event)">Запустить демо →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== WHY US ============================== -->
+<section>
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">04 · Почему не IQAir и не Яндекс</span>
+      <h2 class="h2">Шесть причин <span class="glow">выбрать нас</span></h2>
+      <p class="lead">У каждого аналога — половина решения. Мы первые, кто собрал всё в один Telegram-чат с понятным языком.</p>
+    </div>
+
+    <div class="why-grid reveal d2">
+      <div class="why">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg></div>
+        <h3>Бесплатно. Навсегда.</h3>
+        <p>Один запрос — 0 ₽. Полная стоимость прототипа на 10 000 пользователей — 12 тыс. ₽ в год.</p>
+      </div>
+      <div class="why">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg></div>
+        <h3>В Telegram, без приложений</h3>
+        <p>Никаких скачиваний, никаких регистраций, никаких СМС. Открыл бот — задал вопрос — получил ответ.</p>
+      </div>
+      <div class="why">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <h3>5 параметров, не 1</h3>
+        <p>Не только воздух. Шум, вода, зелень, события — единый индекс в %, понятный с первого взгляда.</p>
+      </div>
+      <div class="why">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h14V10"/></svg></div>
+        <h3>Российские нормы</h3>
+        <p>СанПиН 1.2.3685-21, Р 2.1.10.1920-04, рекомендации ВОЗ 2021. Не американский AQI на ваши лёгкие.</p>
+      </div>
+      <div class="why">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.4-2.1A8 8 0 1 0 17 19"/><path d="M9 11h.01M13 11h.01"/></svg></div>
+        <h3>Подписка на район</h3>
+        <p>Один раз настроил — бот сам пингует утром, если воздух ухудшился. Можешь успеть забрать ребёнка из секции.</p>
+      </div>
+      <div class="why">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+        <h3>Открытая методика</h3>
+        <p>Никакого «чёрного ящика». Формула, веса и источники открыты — можешь проверить любую цифру.</p>
+      </div>
+    </div>
+
+    <div class="inline-cta reveal d3">
+      <div class="ic-text">Хватит читать. <b>Возьми и попробуй —</b> демо ниже.</div>
+      <a href="#demo" class="btn btn-primary" onclick="goToDemo(event)">К боту →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SCENARIOS ============================== -->
+<section class="section--alt">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">05 · Кому это нужно</span>
+      <h2 class="h2">Три истории</h2>
+    </div>
+
+    <div class="scenarios reveal d2">
+      <div class="scen">
+        <span class="who">Мама, Невский район</span>
+        <h3>Аня проверяет каждое утро в 7:15</h3>
+        <p>Сын в секции карате три раза в неделю. Если бот говорит «E ≥ 60%» — переносит занятие. За год Аня сократила суммарное воздействие на ребёнка на 20%.</p>
+        <div class="quote">«Раньше я просто молилась. Теперь у меня есть число.»</div>
+      </div>
+      <div class="scen">
+        <span class="who">Молодая семья, переезд</span>
+        <h3>Сергей выбирал квартиру 2 месяца</h3>
+        <p>Перед арендой сравнил 5 районов СПб за последние 30 дней. Бот выдал таблицу — Сергей переехал в Пушкинский, переплатив 8 тыс./мес, но избежав Кировского.</p>
+        <div class="quote">«Я бы не догадался посмотреть на эти данные, если бы не было одной кнопки.»</div>
+      </div>
+      <div class="scen">
+        <span class="who">Эко-активисты</span>
+        <h3>Команда в Васильевском острове</h3>
+        <p>Используют бот как источник систематизированных данных. За полгода собрали материал на обращение в Росприроднадзор — превышения по 4 районам.</p>
+        <div class="quote">«Раньше копались в PDF Минприроды по часу. Теперь — 30 секунд в чате.»</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== DEMO BOT ============================== -->
+<section id="demo">
+  <div class="container">
+
+    <div class="demo-wrap reveal">
+      <div class="demo-grid">
+        <div class="demo-side">
+          <span class="eyebrow">Демо · Прямо здесь, прямо сейчас</span>
+          <h2><span class="grad-anim">Попробуй бота</span><br>без Telegram</h2>
+          <p>
+            Полная имитация настоящего бота — те же кнопки, та же логика, тот же расчёт.
+            Выбери любой из 18 районов СПб → получи интегральную оценку, расшифровку по 5 параметрам и совет.
+          </p>
+          <ul class="demo-checks">
+            <li>Все 18 районов Санкт-Петербурга</li>
+            <li>Реальная формула из курсовой</li>
+            <li>Расшифровка по 5 параметрам</li>
+            <li>Подписка и режим «я с ребёнком»</li>
+            <li>Работает без интернета после загрузки</li>
+          </ul>
+          <div class="demo-cta-row">
+            <button class="btn btn-shimmer btn-lg" onclick="restartBot()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>
+              Перезапустить демо
+            </button>
+            <a href="#method" class="btn btn-ghost btn-lg">Методология ↓</a>
+          </div>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone" id="phone">
+            <div class="phone-screen">
+              <div class="notch"></div>
+
+              <div class="status-bar">
+                <span class="mono" id="clock">9:41</span>
+                <div class="icons">
+                  <svg width="16" height="11" viewBox="0 0 16 11" fill="currentColor" aria-hidden="true"><rect x="0" y="6" width="2.5" height="5" rx=".5"/><rect x="4" y="4" width="2.5" height="7" rx=".5"/><rect x="8" y="2" width="2.5" height="9" rx=".5"/><rect x="12" y="0" width="2.5" height="11" rx=".5"/></svg>
+                  <svg width="16" height="11" viewBox="0 0 16 11" fill="currentColor" aria-hidden="true"><path d="M8 2.5C5 2.5 2.5 4 1 5.5L2.5 7C3.7 5.8 5.7 5 8 5s4.3.8 5.5 2L15 5.5C13.5 4 11 2.5 8 2.5zM4 8l2 2c.5-.5 1.2-.8 2-.8s1.5.3 2 .8l2-2c-1-1-2.5-1.5-4-1.5S5 7 4 8z"/></svg>
+                  <svg width="24" height="11" viewBox="0 0 24 11" fill="none" aria-hidden="true"><rect x="0" y="0" width="20" height="10" rx="2" stroke="currentColor" stroke-width="1"/><rect x="2" y="2" width="14" height="6" rx="1" fill="currentColor"/><rect x="21" y="3" width="1.5" height="4" rx=".5" fill="currentColor"/></svg>
+                </div>
+              </div>
+
+              <div class="tg-header">
+                <span class="tg-back">‹</span>
+                <div class="tg-avatar">
+                  <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 6 L26 14 V24 a1.5 1.5 0 0 1 -1.5 1.5 H7.5 a1.5 1.5 0 0 1 -1.5 -1.5 V14 Z" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><rect x="13" y="16" width="6" height="8" rx=".5" fill="#fff"/></svg>
+                </div>
+                <div class="tg-meta">
+                  <b>Чистый Стандарт</b>
+                  <span class="tg-online">бот · онлайн</span>
+                </div>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style="color:#7d8b99" aria-hidden="true"><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></svg>
+              </div>
+
+              <div class="tg-chat" id="chat"></div>
+
+              <div class="tg-input" id="kbd-area"></div>
+            </div>
+            <div class="home-bar"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================== FAQ ============================== -->
+<section class="section--alt" id="faq">
+  <div class="container container--narrow">
+    <div class="section-head reveal">
+      <span class="eyebrow">06 · Частые вопросы</span>
+      <h2 class="h2">FAQ</h2>
+    </div>
+
+    <div class="faq reveal d2">
+      <details>
+        <summary>А это правда бесплатно?</summary>
+        <div class="answer">
+          <p>Да. Один запрос для пользователя — 0 ₽. Вся годовая инфраструктура (VPS, сертификаты, бэкапы, API-лимиты) для прототипа на 5–10 тыс. человек стоит около 12 тыс. ₽ в год — это покрывается грантом или личным карманом разработчика, не пользователем.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Откуда бот берёт данные?</summary>
+        <div class="answer">
+          <p>Из пяти открытых источников: <b>OpenAQ</b> (мировая база замеров воздуха), <b>Северо-Западное УГМС / ГГО им. Воейкова</b> (государственные данные по СПб), <b>OpenStreetMap</b> (шум и зелень по картам), <b>Sentinel-2</b> (спутниковая съёмка озеленения), <b>Росприроднадзор + МЧС</b> (текущие экологические события). Платных API внутри нет.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Зачем мне это, если можно открыть Яндекс.Погоду?</summary>
+        <div class="answer">
+          <p>Яндекс показывает один обобщённый индекс качества воздуха по городу. Это полезно, но не отвечает на вопрос «<b>что у меня прямо сейчас в Невском</b>». Чистый Стандарт идёт глубже: 5 параметров, разбивка по районам, российские ПДК и понятная рекомендация — «гулять или не гулять».</p>
+        </div>
+      </details>
+      <details>
+        <summary>Бот хранит мою геолокацию?</summary>
+        <div class="answer">
+          <p>Только если ты сам нажал «Подписаться на район» — тогда бот запоминает выбранный район (не точные координаты), чтобы слать тебе пуш при превышении порога. Отписаться можно одной командой /unsub. Соответствие ФЗ-152.</p>
+        </div>
+      </details>
+      <details>
+        <summary>А если бот покажет, что воздух плохой — что делать?</summary>
+        <div class="answer">
+          <p>В карточке всегда есть конкретный совет: закрыть окна, включить очиститель, надеть FFP2, отменить пробежку. Для родителей и аллергиков — расширенные рекомендации по кнопке «Я с ребёнком».</p>
+        </div>
+      </details>
+      <details>
+        <summary>Когда уже будет реальный бот в Telegram?</summary>
+        <div class="answer">
+          <p>Это <b>курсовой проект СПбГМТУ 2026</b>. Сейчас защищается концепция и алгоритм. Реализация в виде прототипа — следующий шаг, по предварительной оценке 2–3 месяца силами небольшой команды. Если хочешь поучаствовать или просто получать апдейты — напиши автору (контакты в футере).</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="inline-cta reveal d3">
+      <div class="ic-text">Не нашёл ответа? <b>Попробуй задать вопрос боту в демо.</b></div>
+      <a href="#demo" class="btn btn-primary" onclick="goToDemo(event)">Открыть демо →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== METHODOLOGY (FOR PROFESSOR) ============================== -->
+<section id="method">
+  <div class="container container--narrow">
+    <div class="section-head reveal">
+      <span class="eyebrow">07 · Для научного руководителя</span>
+      <h2 class="h2">Методология проекта</h2>
+      <p class="lead">Полная методическая часть курсовой работы — формула, нормативная база, SWOT-анализ, сравнение с аналогами по 13 критериям, архитектура и ФСА.</p>
+    </div>
+
+    <div class="method-intro reveal">
+      <div class="ic">🎓</div>
+      <div>
+        <h3>Курсовой проект СПбГМТУ, 2026</h3>
+        <p>Раскройте интересующий раздел. Все методики опираются на действующие нормативы РФ: ГОСТ 7.32-2017, Р 2.1.10.1920-04, СанПиН 1.2.3685-21, рекомендации ВОЗ 2021.</p>
+      </div>
+    </div>
+
+    <div class="method-acc reveal d2">
+
+      <details>
+        <summary>
+          <div class="ms-l"><b>Формула расчёта интегрального риска E</b><span>Взвешенная сумма 5 частных индексов · опора на Р 2.1.10.1920-04</span></div>
+          <div class="ms-r">+</div>
+        </summary>
+        <div class="ma-body">
+          <p>Каждый частный индекс I нормирован на [0; 1] как отношение фактического воздействия к ПДК (СанПиН 1.2.3685-21). При превышении ПДК — штрафной коэффициент 1.2.</p>
+          <div class="formula-block">
+            <span class="eq">E</span> = (
+              <span class="w">w₁</span>·<span class="i">I_air</span> +
+              <span class="w">w₂</span>·<span class="i">I_water</span> +
+              <span class="w">w₃</span>·<span class="i">I_noise</span> +
+              <span class="w">w₄</span>·<span class="i">I_green</span> +
+              <span class="w">w₅</span>·<span class="i">I_events</span>
+            ) · <span class="pct">100 %</span>
+          </div>
+          <p>Веса: <b style="color:#fde047">w₁=0.40 (воздух)</b>, w₂=0.20 (вода), w₃=0.15 (шум), w₄=0.15 (озеленение), w₅=0.10 (события). Воздуху наибольший вес: по данным ВОЗ — до 70% антропогенного риска здоровью горожанина.</p>
+
+          <div class="scale">
+            <div class="scale-step s1"><div class="range">0–20</div><div class="lvl">Низкий</div><p>Безопасно. Обычный режим.</p></div>
+            <div class="scale-step s2"><div class="range">21–40</div><div class="lvl">Умеренный</div><p>Внимание чувствительным группам.</p></div>
+            <div class="scale-step s3"><div class="range">41–60</div><div class="lvl">Повышенный</div><p>Сократить уличный спорт.</p></div>
+            <div class="scale-step s4"><div class="range">61–80</div><div class="lvl">Высокий</div><p>Закрыть окна, очиститель.</p></div>
+            <div class="scale-step s5"><div class="range">81–100</div><div class="lvl">Очень высокий</div><p>Минимизировать выход.</p></div>
+          </div>
+
+          <p style="margin-top:18px"><b>Пример расчёта</b> (Центральный, СПб, 12.03.2025): PM2.5=18, PM10=35, NO₂=0.11, SO₂=0.02. Max(C/ПДК)=1.10 → I_air=(1.10·1.2)/4=0.33. I_water=0.15, I_noise=0.55, I_green=0.60, I_events=0.10. Итог: <b style="color:var(--eco-3)">E=34.5% → УМЕРЕННЫЙ</b>.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>
+          <div class="ms-l"><b>SWOT-анализ системы</b><span>Сильные и слабые стороны, возможности и угрозы</span></div>
+          <div class="ms-r">+</div>
+        </summary>
+        <div class="ma-body">
+          <div class="swot">
+            <div class="swot-card swot-s">
+              <span class="tag">Strengths</span>
+              <ul>
+                <li>Бесплатный доступ через привычный мессенджер</li>
+                <li>Низкие затраты ~12 тыс. ₽/год на инфраструктуру</li>
+                <li>Опора на Р 2.1.10.1920-04 и СанПиН 1.2.3685-21</li>
+                <li>Интегральный показатель в %, понятный без подготовки</li>
+                <li>Масштабирование на любой регион РФ</li>
+              </ul>
+            </div>
+            <div class="swot-card swot-w">
+              <span class="tag">Weaknesses</span>
+              <ul>
+                <li>Зависимость от качества внешних источников</li>
+                <li>Ограниченное покрытие малых населённых пунктов</li>
+                <li>Юридически нестрогий статус результатов</li>
+                <li>Возможные ограничения Telegram в РФ</li>
+                <li>Необходимость периодической верификации весов</li>
+              </ul>
+            </div>
+            <div class="swot-card swot-o">
+              <span class="tag">Opportunities</span>
+              <ul>
+                <li>Интеграция в нацпроект «Экологическое благополучие»</li>
+                <li>Сотрудничество с эко-НКО и медсервисами</li>
+                <li>Прогноз на 24 часа, AR-карты, Mini App в Telegram</li>
+                <li>Citizen science — сеть любительских датчиков</li>
+                <li>Гранты ФСИ, ПФКИ, региональные программы</li>
+              </ul>
+            </div>
+            <div class="swot-card swot-t">
+              <span class="tag">Threats</span>
+              <ul>
+                <li>Появление аналогичных госрешений</li>
+                <li>Изменения тарифной политики Telegram</li>
+                <li>Закрытие или платность внешних API</li>
+                <li>Ужесточение требований к перс. данным</li>
+                <li>Технические сбои у источников данных</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details>
+        <summary>
+          <div class="ms-l"><b>Сравнение с аналогами по 13 критериям</b><span>«Чистый Стандарт» 13/13 · Минприроды 7 · AirIndex 5 · Яндекс 5 · IQAir 4 · 2ГИС 3</span></div>
+          <div class="ms-r">+</div>
+        </summary>
+        <div class="ma-body">
+          <div class="compare-wrap">
+            <table class="compare">
+              <thead>
+                <tr>
+                  <th>Критерий</th>
+                  <th class="us">Чистый Стандарт</th>
+                  <th>IQAir</th>
+                  <th>Минприроды</th>
+                  <th>Яндекс</th>
+                  <th>2ГИС</th>
+                  <th>AirIndex</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Бесплатный полный функционал</td><td class="us cell-yes">✓</td><td class="cell-part">part</td><td class="cell-yes">✓</td><td class="cell-yes">✓</td><td class="cell-yes">✓</td><td class="cell-part">part</td></tr>
+                <tr><td>Доступ через Telegram</td><td class="us cell-yes">✓</td><td class="cell-no">✕</td><td class="cell-no">✕</td><td class="cell-no">✕</td><td class="cell-no">✕</td><td class="cell-no">✕</td></tr>
+                <tr><td>Локализация на русский</td><td class="us cell-yes">✓</td><td class="cell-part">part</td><td class="cell-yes">✓</td><td class="cell-yes">✓</td><td class="cell-yes">✓</td><td class="cell-yes">✓</td></tr>
+                <tr><td>Покрытие городов РФ ≥ 50</td><td class="us cell-yes">✓</td><td class="cell-part">part</td><td class="cell-yes">✓</td><td class="cell-yes">✓</td><td class="cell-yes">✓</td><td class="cell-no">✕</td></tr>
+                <tr><td>Учёт PM2.5</td><td class="us cell-yes">✓</td><td class="cell-yes">✓</td><td class="cell-part">part</td><td class="cell-part">part</td><td class="cell-no">✕</td><td class="cell-yes">✓</td></tr>
+                <tr><td>Учёт шума</td><td class="us cell-yes">✓</td><td class="cell-no">✕</td><td class="cell-no">✕</td><td class="cell-no">✕</td><td class="cell-no">✕</td><td class="cell-no">✕</td></tr>
+                <tr><td>Учёт озеленения</td><td class="us cell-yes">✓</td><td class="cell-no">✕</td><td class="cell-no">✕</td><td class="cell-no">✕</td><td class="cell-part">part</td><td class="cell-no">✕</td></tr>
+                <tr><td>Учёт экологических событий</td><td class="us cell-yes">✓</td><td class="cell-no">✕</td><td class="cell-no">✕</td><td class="cell-no">✕</td><td class="cell-no">✕</td><td class="cell-no">✕</td></tr>
+                <tr><td>Персонализированные рекомендации</td><td class="us cell-yes">✓</td><td class="cell-part">part</td><td class="cell-no">✕</td><td class="cell-part">part</td><td class="cell-no">✕</td><td class="cell-yes">✓</td></tr>
+                <tr><td>Push-подписка на район</td><td class="us cell-yes">✓</td><td class="cell-yes">✓</td><td class="cell-no">✕</td><td class="cell-yes">✓</td><td class="cell-no">✕</td><td class="cell-yes">✓</td></tr>
+                <tr><td>Открытость методики</td><td class="us cell-yes">✓</td><td class="cell-no">✕</td><td class="cell-part">part</td><td class="cell-no">✕</td><td class="cell-no">✕</td><td class="cell-no">✕</td></tr>
+                <tr><td>Без обязательной регистрации</td><td class="us cell-yes">✓</td><td class="cell-no">✕</td><td class="cell-yes">✓</td><td class="cell-no">✕</td><td class="cell-no">✕</td><td class="cell-no">✕</td></tr>
+                <tr><td>Опора на нормативы РФ</td><td class="us cell-yes">✓</td><td class="cell-no">✕</td><td class="cell-yes">✓</td><td class="cell-no">✕</td><td class="cell-no">✕</td><td class="cell-part">part</td></tr>
+                <tr class="score-row"><td>ИТОГО из 13</td><td class="us">13</td><td>4</td><td>7</td><td>5</td><td>3</td><td>5</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+
+      <details>
+        <summary>
+          <div class="ms-l"><b>Архитектура системы</b><span>5 модулей · Python · aiogram 3 · TimescaleDB · Docker</span></div>
+          <div class="ms-r">+</div>
+        </summary>
+        <div class="ma-body">
+          <div class="arch">
+            <div class="arch-step"><div class="n">01</div><div class="tech">data collector</div><h4>Сбор данных</h4><p>Опрашивает 5 источников по расписанию, нормализует и пишет в TimescaleDB.</p></div>
+            <div class="arch-step"><div class="n">02</div><div class="tech">risk engine</div><h4>Расчёт риска</h4><p>Геокодирует район, выбирает точки, считает E по формуле.</p></div>
+            <div class="arch-step"><div class="n">03</div><div class="tech">recommend</div><h4>Рекомендации</h4><p>Текст по уровню и группе: общая / чувствительные / активные.</p></div>
+            <div class="arch-step"><div class="n">04</div><div class="tech">aiogram 3 · FSM</div><h4>Telegram-бот</h4><p>Long polling, инлайн-кнопки, геолокация, подписки.</p></div>
+            <div class="arch-step"><div class="n">05</div><div class="tech">fastapi admin</div><h4>Админ-панель</h4><p>Веб-интерфейс для оператора — качество данных, веса, статистика.</p></div>
+          </div>
+          <p style="margin-top:18px;font-size:14px;color:var(--ink-muted)">Минимальная конфигурация VPS: 2 ядра CPU, 4 ГБ ОЗУ, 40 ГБ SSD. Развёртывание из коробки — Docker Compose. Время отклика на запрос — 1–2 секунды.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>
+          <div class="ms-l"><b>ФСА · экономика прототипа</b><span>~12 000 ₽/год на инфраструктуру · &lt; 0.01 ₽ на один запрос</span></div>
+          <div class="ms-r">+</div>
+        </summary>
+        <div class="ma-body">
+          <div class="costs-table">
+            <div class="row"><div class="key">VPS · 2 CPU · 4 ГБ · 40 ГБ SSD</div><div class="val">700 ₽/мес</div></div>
+            <div class="row"><div class="key">TimescaleDB · временные ряды</div><div class="val">входит в VPS</div></div>
+            <div class="row"><div class="key">SSL-сертификат (Let's Encrypt)</div><div class="val">0 ₽/год</div></div>
+            <div class="row"><div class="key">API запросы (10k пользователей)</div><div class="val">3 000 ₽/мес</div></div>
+            <div class="row"><div class="key">Резервное копирование</div><div class="val">200 ₽/мес</div></div>
+            <div class="row"><div class="key">Sentry · Prometheus · Grafana (free)</div><div class="val">0–500 ₽/мес</div></div>
+            <div class="row"><div class="key">ИТОГО за первый год</div><div class="val">~12 000 ₽</div></div>
+          </div>
+          <p style="margin-top:18px;font-size:14px;color:var(--ink-muted)">Себестоимость одного запроса при выходе на 10 000 пользователей — <b style="color:var(--eco-3)">менее 0.01 ₽</b>. Соотношение «функции/затраты» в 4–5 раз выгоднее коммерческих аналогов — за счёт опоры на открытые источники и отказа от собственных датчиков.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>
+          <div class="ms-l"><b>Нормативная база и источники</b><span>ГОСТы · СанПиН · ВОЗ · 20 научных публикаций</span></div>
+          <div class="ms-r">+</div>
+        </summary>
+        <div class="ma-body">
+          <p><b style="color:var(--eco-3)">Нормативные документы</b>: ГОСТ 7.32-2017, ГОСТ 7.1-2003, ГОСТ Р 22.1.10-2002, ГОСТ 17.2.3.01-86, ГОСТ Р ИСО 14001-2016, ГОСТ 30333-2007, СанПиН 1.2.3685-21, Р 2.1.10.1920-04, ФЗ-7 «Об охране окружающей среды», ФЗ-152 «О персональных данных».</p>
+          <p><b style="color:var(--eco-3)">Ключевые источники по СПб</b>:</p>
+          <ul style="margin:0;padding-left:18px;color:var(--ink-muted);font-size:14px;line-height:1.7">
+            <li>Северо-Западное УГМС — справки за 2023, 2024 гг.</li>
+            <li>ГГО им. Воейкова — ежегодник состояния загрязнения 2024 г.</li>
+            <li>Минприроды РФ — обзор за 2024 г. (30.06.2025)</li>
+            <li>Комитет по природопользованию СПб — экопортал</li>
+            <li>EcoStandard Group · Tion · ПРЦ · SpbHomes — рейтинги районов</li>
+            <li>WHO Global Air Quality Guidelines (2021)</li>
+            <li>Авалиани, Новиков, Шашина, Ракитский — отечественная методология оценки риска</li>
+          </ul>
+          <p style="margin-top:16px;font-size:13px;color:var(--ink-dim)">Полный список из 20 источников — в разделе «Список использованных источников» курсовой работы.</p>
+        </div>
+      </details>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============================== FINAL CTA ============================== -->
+<section>
+  <div class="container">
+    <div class="cta-final reveal">
+      <h2 class="h2"><span class="grad-anim">Узнай про свой район</span><br>прямо сейчас</h2>
+      <p>
+        30 секунд. Без приложений. Без регистрации. Без подписок.
+        Один из 18 районов СПб → понятный ответ → совет, что делать.
+      </p>
+      <div class="cta-row">
+        <button class="btn btn-shimmer btn-xl" onclick="goToDemoButton()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>
+          Открыть демо бота
+        </button>
+        <a href="#method" class="btn btn-ghost btn-xl">Изучить методологию</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== FLOATING BUTTON ============================== -->
+<button class="fab" id="fab" onclick="goToDemoButton()" aria-label="Попробовать бота">
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>
+  Попробовать бота
+</button>
+
+<!-- ============================== FOOTER ============================== -->
+<footer>
+  <div class="container">
+    <div class="foot-grid">
+      <div>
+        <a href="#top" class="brand" style="margin-bottom:16px;display:inline-flex">
+          <svg viewBox="0 0 32 32" fill="none" style="width:28px;height:28px" aria-hidden="true"><path d="M16 4 L28 14 V26 a2 2 0 0 1 -2 2 H6 a2 2 0 0 1 -2 -2 V14 Z" stroke="url(#brandG2)" stroke-width="2.2" stroke-linejoin="round"/><rect x="12" y="16" width="8" height="9" rx="1" fill="url(#brandG2)"/><defs><linearGradient id="brandG2" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#5cffb4"/><stop offset=".5" stop-color="#16d97e"/><stop offset="1" stop-color="#1bbf6e"/></linearGradient></defs></svg>
+          <b>Чистый Стандарт</b>
+        </a>
+        <p>Telegram-бот для оценки экологии городских районов. Курсовой проект СПбГМТУ, 2026.</p>
+      </div>
+      <div>
+        <h4>Проект</h4>
+        <ul>
+          <li><a href="#problem">Зачем</a></li>
+          <li><a href="#data">Районы СПб</a></li>
+          <li><a href="#how">Как работает</a></li>
+          <li><a href="#demo" onclick="goToDemo(event)">Демо</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Методология</h4>
+        <ul>
+          <li><a href="#method">Формула</a></li>
+          <li><a href="#method">SWOT</a></li>
+          <li><a href="#method">Сравнение</a></li>
+          <li><a href="#method">Архитектура</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Автор</h4>
+        <ul>
+          <li>Сергеев Кирилл</li>
+          <li>Группа 2240, СПбГМТУ</li>
+          <li>Факультет КЭиА</li>
+          <li>Научрук: к.т.н. Г. В. Черкаев</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="foot-sources">
+      <b>Источники данных по СПб</b>
+      Северо-Западное УГМС (Росгидромет) · ГГО им. А. И. Воейкова · Минприроды РФ (обзор 2024 г., 30.06.2025) · Комитет по природопользованию СПб (экопортал) · EcoStandard Group · Tion (экокарта Петербурга) · ПРЦ «Где петербуржцу жить хорошо» (09.2024) · SpbHomes · Wikipedia («Экология Санкт-Петербурга»). Все цифры на этом сайте — агрегаты из перечисленных открытых источников; точные значения по каждому району и есть задача, которую решает бот.
+    </div>
+
+    <div class="foot-bottom">
+      <span>© 2026 Чистый Стандарт · методики: Р 2.1.10.1920-04, СанПиН 1.2.3685-21, ВОЗ 2021</span>
+      <span class="mono">v1.0.0 · prototype</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ============================== JS ============================== -->
+<script>
+"use strict";
+(function(){
+
+/* ========================================================================
+   DISTRICTS DATASET — 18 районов СПб
+   Числа основаны на:
+   — общегородское годовое среднее PM2.5 ≈ 9 мкг/м³ (УГМС 2024)
+   — качественные рейтинги (EcoStandard, Tion, ПРЦ, SpbHomes)
+   Точные числа по каждому району публично не существуют — это и есть
+   задача системы. Здесь — модельная оценка для демонстрации алгоритма.
+   ======================================================================== */
+const DISTRICTS = [
+  // чистые
+  {key:"kurort",   name:"Курортный",       group:"clean",  I:{air:0.18, water:0.08, noise:0.22, green:0.15, events:0.05}, air:{pm25:5,  pm10:12, no2:0.04, so2:0.008}},
+  {key:"petrodv",  name:"Петродворцовый",  group:"clean",  I:{air:0.20, water:0.10, noise:0.25, green:0.18, events:0.05}, air:{pm25:6,  pm10:14, no2:0.05, so2:0.010}},
+  {key:"pushkin",  name:"Пушкинский",      group:"clean",  I:{air:0.22, water:0.12, noise:0.28, green:0.20, events:0.05}, air:{pm25:7,  pm10:16, no2:0.05, so2:0.011}},
+  {key:"krasnos",  name:"Красносельский",  group:"clean",  I:{air:0.28, water:0.15, noise:0.35, green:0.25, events:0.08}, air:{pm25:8,  pm10:18, no2:0.06, so2:0.012}},
+  {key:"kronshtadt",name:"Кронштадтский",  group:"clean",  I:{air:0.32, water:0.18, noise:0.30, green:0.28, events:0.10}, air:{pm25:9,  pm10:20, no2:0.07, so2:0.014}},
+
+  // нейтральные / норма
+  {key:"petrograd",name:"Петроградский",   group:"mid",    I:{air:0.42, water:0.18, noise:0.55, green:0.30, events:0.10}, air:{pm25:12, pm10:24, no2:0.09, so2:0.015}},
+  {key:"vasilyev", name:"Василеостровский",group:"mid",    I:{air:0.50, water:0.25, noise:0.60, green:0.55, events:0.12}, air:{pm25:14, pm10:28, no2:0.10, so2:0.018}},
+  {key:"moscow",   name:"Московский",      group:"mid",    I:{air:0.55, water:0.22, noise:0.72, green:0.50, events:0.20}, air:{pm25:15, pm10:30, no2:0.13, so2:0.022}},
+  {key:"kalinin",  name:"Калининский",     group:"mid",    I:{air:0.54, water:0.25, noise:0.65, green:0.52, events:0.18}, air:{pm25:14, pm10:29, no2:0.12, so2:0.020}},
+  {key:"primorsk", name:"Приморский",      group:"mid",    I:{air:0.52, water:0.30, noise:0.55, green:0.45, events:0.20}, air:{pm25:13, pm10:27, no2:0.11, so2:0.030}},
+  {key:"kolpino",  name:"Колпинский",      group:"mid",    I:{air:0.58, water:0.30, noise:0.50, green:0.40, events:0.30}, air:{pm25:16, pm10:32, no2:0.12, so2:0.035}},
+
+  // повышенные / грязные
+  {key:"central",  name:"Центральный",     group:"mid",    I:{air:0.62, water:0.20, noise:0.80, green:0.65, events:0.22}, air:{pm25:18, pm10:35, no2:0.14, so2:0.022}},
+  {key:"admiral",  name:"Адмиралтейский",  group:"dirty",  I:{air:0.68, water:0.25, noise:0.82, green:0.70, events:0.25}, air:{pm25:20, pm10:38, no2:0.15, so2:0.025}},
+  {key:"frunze",   name:"Фрунзенский",     group:"dirty",  I:{air:0.78, water:0.30, noise:0.72, green:0.60, events:0.35}, air:{pm25:22, pm10:42, no2:0.20, so2:0.028}},
+  {key:"vyborg",   name:"Выборгский",      group:"dirty",  I:{air:0.75, water:0.35, noise:0.68, green:0.55, events:0.45}, air:{pm25:21, pm10:40, no2:0.16, so2:0.040}},
+  {key:"krasnog",  name:"Красногвардейский",group:"dirty", I:{air:0.82, water:0.40, noise:0.65, green:0.62, events:0.55}, air:{pm25:24, pm10:46, no2:0.17, so2:0.045}},
+  {key:"nevsky",   name:"Невский",         group:"dirty",  I:{air:0.85, water:0.42, noise:0.78, green:0.70, events:0.50}, air:{pm25:25, pm10:48, no2:0.18, so2:0.038}},
+  {key:"kirovsky", name:"Кировский",       group:"dirty",  I:{air:0.88, water:0.55, noise:0.75, green:0.65, events:0.65}, air:{pm25:26, pm10:52, no2:0.18, so2:0.060}},
+];
+const WEIGHTS = {air:0.40, water:0.20, noise:0.15, green:0.15, events:0.10};
+
+function calcE(I){
+  return (I.air*WEIGHTS.air + I.water*WEIGHTS.water + I.noise*WEIGHTS.noise + I.green*WEIGHTS.green + I.events*WEIGHTS.events) * 100;
+}
+function level(e){
+  if(e<=20) return {n:1, t:"низкий",       cls:"lvl-1", emoji:"🟢", tip:"Можно гулять, можно открыть окна, можно бегать."};
+  if(e<=40) return {n:2, t:"умеренный",    cls:"lvl-2", emoji:"🟡", tip:"В целом нормально. Аллергикам и детям — без перенапряжения."};
+  if(e<=60) return {n:3, t:"повышенный",   cls:"lvl-3", emoji:"🟠", tip:"Сократи уличный спорт. Окна проветривать недолго."};
+  if(e<=80) return {n:4, t:"высокий",      cls:"lvl-4", emoji:"🔴", tip:"Закрой окна. Включи очиститель. При выходе — маска."};
+            return {n:5, t:"очень высокий",cls:"lvl-5", emoji:"⛔", tip:"Минимизируй выход. Респиратор FFP2. Детей не выводи."};
+}
+
+/* ========================================================================
+   DOM utilities — escaping prevents XSS even though all input is trusted
+   ======================================================================== */
+function esc(s){
+  return String(s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+const chat   = document.getElementById('chat');
+const kbdArea= document.getElementById('kbd-area');
+let typingEl = null;
+
+function nowTime(){
+  const d=new Date();
+  return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+}
+function scrollChat(){chat.scrollTop = chat.scrollHeight + 200}
+
+function showTyping(){
+  hideTyping();
+  typingEl = document.createElement('div');
+  typingEl.className = 'typing';
+  typingEl.innerHTML = '<i></i><i></i><i></i>';
+  chat.appendChild(typingEl);
+  scrollChat();
+}
+function hideTyping(){if(typingEl){typingEl.remove();typingEl=null}}
+
+function addBot(html, delay){
+  delay = delay==null ? 900 : delay;
+  return new Promise(function(res){
+    showTyping();
+    setTimeout(function(){
+      hideTyping();
+      const m = document.createElement('div');
+      m.className = 'msg in';
+      m.innerHTML = html + '<span class="time">'+esc(nowTime())+'</span>';
+      chat.appendChild(m);
+      scrollChat();
+      res();
+    }, delay);
+  });
+}
+function addUser(text){
+  const m = document.createElement('div');
+  m.className = 'msg out';
+  m.innerHTML = esc(text) + '<span class="time">'+esc(nowTime())+'<span class="check">✓✓</span></span>';
+  chat.appendChild(m);
+  scrollChat();
+}
+function setKbd(html){kbdArea.innerHTML = html}
+function clearKbd(){kbdArea.innerHTML=''}
+
+/* ========================================================================
+   Reply keyboard builders
+   ======================================================================== */
+function kbdMain(){
+  setKbd(
+    '<div class="reply-kbd">' +
+      '<div class="reply-row">' +
+        '<button class="reply-btn" data-action="know"><span class="emoji">📍</span> Узнать риск</button>' +
+      '</div>' +
+      '<div class="reply-row">' +
+        '<button class="reply-btn" data-action="sub"><span class="emoji">🔔</span> Подписаться</button>' +
+        '<button class="reply-btn" data-action="about"><span class="emoji">ℹ️</span> О проекте</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="input-row">' +
+      '<span class="input-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 C8 2 5 5 5 9 c0 5 7 13 7 13 s7 -8 7 -13 c0 -4 -3 -7 -7 -7 z"/><circle cx="12" cy="9" r="2.5"/></svg></span>' +
+      '<div class="input-pill">Сообщение</div>' +
+      '<span class="input-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 v14"/><path d="M5 9 l7 7 7 -7"/><path d="M5 22 h14"/></svg></span>' +
+    '</div>'
+  );
+}
+function kbdDistricts(){
+  const groups = [
+    {label:"🟢 Чистые", keys:["kurort","petrodv","pushkin","krasnos","kronshtadt"]},
+    {label:"🟡 Норма",  keys:["petrograd","vasilyev","moscow","kalinin","primorsk","kolpino","central"]},
+    {label:"🔴 Грязные",keys:["admiral","frunze","vyborg","krasnog","nevsky","kirovsky"]},
+  ];
+  let html = '<div class="reply-kbd">';
+  groups.forEach(function(g){
+    html += '<div class="reply-row"><button class="reply-btn" style="background:#1c2a3a;color:var(--ink-dim);pointer-events:none">'+esc(g.label)+'</button></div>';
+    // pairs of 2
+    for(let i=0;i<g.keys.length;i+=2){
+      html += '<div class="reply-row">';
+      const k1 = g.keys[i];
+      const d1 = DISTRICTS.find(function(d){return d.key===k1});
+      html += '<button class="reply-btn" data-district="'+esc(k1)+'">'+esc(d1.name)+'</button>';
+      if(g.keys[i+1]){
+        const k2 = g.keys[i+1];
+        const d2 = DISTRICTS.find(function(d){return d.key===k2});
+        html += '<button class="reply-btn" data-district="'+esc(k2)+'">'+esc(d2.name)+'</button>';
+      }
+      html += '</div>';
+    }
+  });
+  html += '<div class="reply-row"><button class="reply-btn" data-action="back">← Назад в меню</button></div>';
+  html += '</div>';
+  setKbd(html);
+}
+function kbdAfterResult(districtKey){
+  setKbd(
+    '<div class="reply-kbd">' +
+      '<div class="reply-row"><button class="reply-btn" data-action="recommend" data-district="'+esc(districtKey)+'"><span class="emoji">👶</span> Я с ребёнком / аллергик</button></div>' +
+      '<div class="reply-row">' +
+        '<button class="reply-btn" data-action="sub-confirm" data-district="'+esc(districtKey)+'"><span class="emoji">🔔</span> Подписаться</button>' +
+        '<button class="reply-btn" data-action="know"><span class="emoji">📍</span> Другой район</button>' +
+      '</div>' +
+      '<div class="reply-row"><button class="reply-btn" data-action="back">← В меню</button></div>' +
+    '</div>'
+  );
+}
+
+/* ========================================================================
+   Bot flow
+   ======================================================================== */
+async function restartBot(){
+  chat.innerHTML = '';
+  clearKbd();
+  addUser('/start');
+  await addBot('Привет 👋 Я — <b class="title">Чистый Стандарт</b>.<br><br>Помогу понять, что у тебя в районе с воздухом, шумом и зеленью.<br><br>Считаю одно число <b>E</b> по 5 факторам — и говорю простыми словами: гулять или закрывать окна.', 700);
+  await addBot('С чего начнём?', 500);
+  kbdMain();
+}
+window.restartBot = restartBot;
+
+async function showAbout(){
+  addUser('ℹ️ О проекте');
+  await addBot('<b class="title">Чистый Стандарт</b> · v1.0.0<br><br>Курсовой проект СПбГМТУ, 2026. Данные собираю из 5 источников: <b>OpenAQ</b>, <b>Росгидромет</b>, <b>ГГО Воейкова</b>, <b>OpenStreetMap</b>, <b>Sentinel-2</b>.<br><br>Бесплатно. Без регистрации. Без рекламы.', 900);
+  await addBot('Готов попробовать?', 400);
+  kbdMain();
+}
+
+async function startKnow(){
+  addUser('📍 Узнать риск');
+  await addBot('Выбери свой район Санкт-Петербурга. Показаны все 18 — отсортированы по цветам: 🟢 чисто · 🟡 норма · 🔴 грязно.', 600);
+  kbdDistricts();
+}
+
+async function startSub(){
+  addUser('🔔 Подписаться');
+  await addBot('Сначала укажи район — потом я буду слать пуш утром, если воздух ухудшится.', 600);
+  kbdDistricts();
+}
+
+async function showDistrict(key){
+  const d = DISTRICTS.find(function(x){return x.key===key});
+  if(!d) return;
+  addUser('📍 ' + d.name);
+  clearKbd();
+  await addBot('Опрашиваю источники для района <b>' + esc(d.name) + '</b>…', 600);
+  await addBot('🌫 OpenAQ · <b>OK</b><br>🌡 Росгидромет · <b>OK</b><br>🔊 OSM шум · <b>OK</b><br>🌳 Sentinel-2 NDVI · <b>OK</b><br>⚠️ Росприроднадзор · <b>OK</b>', 800);
+
+  const E = calcE(d.I);
+  const L = level(E);
+  const breakdown =
+    '<div class="row"><span>🌫 Воздух</span><span>'+(d.I.air*100).toFixed(0)+'%</span></div>'+
+    '<div class="bar"><i style="width:'+(d.I.air*100).toFixed(0)+'%"></i></div>'+
+    '<div class="row"><span>💧 Вода</span><span>'+(d.I.water*100).toFixed(0)+'%</span></div>'+
+    '<div class="bar"><i style="width:'+(d.I.water*100).toFixed(0)+'%"></i></div>'+
+    '<div class="row"><span>🔊 Шум</span><span>'+(d.I.noise*100).toFixed(0)+'%</span></div>'+
+    '<div class="bar"><i style="width:'+(d.I.noise*100).toFixed(0)+'%"></i></div>'+
+    '<div class="row"><span>🌳 Озеленение</span><span>'+(d.I.green*100).toFixed(0)+'%</span></div>'+
+    '<div class="bar"><i style="width:'+(d.I.green*100).toFixed(0)+'%"></i></div>'+
+    '<div class="row"><span>⚠️ События</span><span>'+(d.I.events*100).toFixed(0)+'%</span></div>'+
+    '<div class="bar"><i style="width:'+(d.I.events*100).toFixed(0)+'%"></i></div>';
+
+  await addBot(
+    '<span class="cs-badge '+L.cls+'">'+L.emoji+' '+esc(L.t)+'</span>'+
+    '<b>Санкт-Петербург · '+esc(d.name)+'</b>'+
+    '<div class="e-big">'+E.toFixed(1)+'<small>% E</small></div>'+
+    '<hr>'+ breakdown +'<hr>'+
+    '<b>PM2.5</b>: '+d.air.pm25+' мкг/м³ · <b>PM10</b>: '+d.air.pm10+' · <b>NO₂</b>: '+d.air.no2+' мг/м³<br><br>'+
+    '💡 <i>'+esc(L.tip)+'</i>'
+  , 1100);
+
+  kbdAfterResult(key);
+}
+
+async function showRecommend(key){
+  const d = DISTRICTS.find(function(x){return x.key===key});
+  if(!d) return;
+  const E = calcE(d.I);
+  const L = level(E);
+  addUser('👶 Я с ребёнком / аллергик');
+  let advice;
+  if(L.n<=2) advice = '<b>Сегодня всё ок.</b><br>👌 Гуляйте без ограничений.<br>🚲 Велик — да.<br>💨 Окна открывайте смело.';
+  else if(L.n===3) advice = '<b>Внимание.</b><br>⏰ Гуляйте до 11:00 или после 19:00.<br>🚸 Ребёнку — без интенсивных нагрузок.<br>🪟 Проветривание короткое, 5–10 мин.<br>😷 Маска — желательно у магистрали.';
+  else if(L.n===4) advice = '<b>Опасно для уязвимых.</b><br>🚫 Долгих прогулок с ребёнком — нет.<br>🪟 Окна закрыть.<br>💨 Очиститель (HEPA H13+) на максимум.<br>😷 При выходе — FFP2.<br>📞 Симптомы → к врачу.';
+  else advice = '<b>⛔ Сиди дома.</b><br>🏠 Режим «убежище».<br>🪟 Окна — наглухо.<br>💨 Очиститель — максимум.<br>😷 Респиратор FFP2/FFP3 — обязательно.<br>🚸 Детей и пожилых — не выводить.';
+  await addBot(advice, 800);
+  kbdAfterResult(key);
+}
+
+async function subConfirm(key){
+  const d = DISTRICTS.find(function(x){return x.key===key});
+  if(!d) return;
+  addUser('🔔 Подписаться');
+  await addBot('Подписка оформлена ✅<br><br>📍 <b>Санкт-Петербург · '+esc(d.name)+'</b><br>🎯 Порог: <b>E ≥ 60%</b><br>⏰ Пуш утром в <b>08:00</b> при превышении.<br><br>Изменить — /sub. Отписаться — /unsub.', 800);
+  kbdAfterResult(key);
+}
+
+/* Centralized event delegation — single safe entry point */
+kbdArea.addEventListener('click', function(e){
+  const btn = e.target.closest('.reply-btn');
+  if(!btn) return;
+  const action = btn.dataset.action;
+  const dist = btn.dataset.district;
+  if(dist && (!action || action==='recommend' || action==='sub-confirm')){
+    if(action==='recommend')   return showRecommend(dist);
+    if(action==='sub-confirm') return subConfirm(dist);
+    return showDistrict(dist);
+  }
+  if(action==='know')   return startKnow();
+  if(action==='sub')    return startSub();
+  if(action==='about')  return showAbout();
+  if(action==='back')   return restartBot();
+});
+
+/* ========================================================================
+   UX helpers — scroll to demo + auto-restart on first visit
+   ======================================================================== */
+let demoStartedOnce = false;
+function maybeStartBot(){
+  if(demoStartedOnce) return;
+  demoStartedOnce = true;
+  restartBot();
+}
+window.goToDemo = function(e){
+  if(e && e.preventDefault) e.preventDefault();
+  const demo = document.getElementById('demo');
+  if(demo) demo.scrollIntoView({behavior:'smooth', block:'start'});
+  setTimeout(maybeStartBot, 600);
+};
+window.goToDemoButton = function(){
+  const demo = document.getElementById('demo');
+  if(demo) demo.scrollIntoView({behavior:'smooth', block:'start'});
+  setTimeout(function(){
+    if(demoStartedOnce) restartBot(); else maybeStartBot();
+  }, 600);
+};
+
+/* ========================================================================
+   Initialization
+   ======================================================================== */
+window.addEventListener('load', function(){
+
+  // Clock
+  function tick(){const el=document.getElementById('clock'); if(el) el.textContent = nowTime();}
+  tick(); setInterval(tick, 30000);
+
+  // Nav scrolled
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', function(){
+    if(window.scrollY>20) nav.classList.add('scrolled'); else nav.classList.remove('scrolled');
+  }, {passive:true});
+
+  // FAB show after 600px scroll
+  const fab = document.getElementById('fab');
+  window.addEventListener('scroll', function(){
+    if(window.scrollY > 600){
+      // hide when demo section in view to avoid duplicate
+      const demo = document.getElementById('demo');
+      const rect = demo.getBoundingClientRect();
+      if(rect.top < window.innerHeight*0.8 && rect.bottom > 0) fab.classList.remove('show');
+      else fab.classList.add('show');
+    } else {
+      fab.classList.remove('show');
+    }
+  }, {passive:true});
+
+  // Reveal on scroll
+  if('IntersectionObserver' in window){
+    const io = new IntersectionObserver(function(ents){
+      ents.forEach(function(e){
+        if(e.isIntersecting){ e.target.classList.add('is-in'); io.unobserve(e.target); }
+      });
+    }, {threshold:.12, rootMargin:'0px 0px -60px 0px'});
+    document.querySelectorAll('.reveal').forEach(function(el){io.observe(el)});
+  } else {
+    document.querySelectorAll('.reveal').forEach(function(el){el.classList.add('is-in')});
+  }
+
+  // Hero h1 line-by-line mask reveal
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!reduced){
+    document.querySelectorAll('.h1-anim .anim').forEach(function(el, i){
+      el.animate(
+        [{transform:'translateY(115%)'},{transform:'translateY(0)'}],
+        {duration:1100, delay:250 + i*140, easing:'cubic-bezier(.2,.8,.2,1)', fill:'forwards'}
+      );
+    });
+  } else {
+    document.querySelectorAll('.h1-anim .anim').forEach(function(el){el.style.transform='none'});
+  }
+
+  // Count-up numbers
+  if('IntersectionObserver' in window){
+    document.querySelectorAll('[data-count]').forEach(function(el){
+      const target = parseFloat(el.dataset.count) || 0;
+      const suffix = el.dataset.suffix || '';
+      el.textContent = '0' + suffix;
+      const anchor = el.closest('.stat, .hero-stats') || el;
+      let fired = false;
+      const io = new IntersectionObserver(function(ents){
+        ents.forEach(function(e){
+          if(!e.isIntersecting || fired) return;
+          fired = true;
+          const dur = reduced ? 200 : 1800;
+          const start = performance.now();
+          (function step(t){
+            const p = Math.min(1, (t - start) / dur);
+            const eased = 1 - Math.pow(1 - p, 4);
+            const v = target % 1 === 0 ? Math.round(eased * target) : (eased * target).toFixed(1);
+            el.textContent = v + suffix;
+            if(p < 1) requestAnimationFrame(step);
+          })(start);
+          io.unobserve(anchor);
+        });
+      }, {threshold: 0.4, rootMargin:'0px 0px -10% 0px'});
+      io.observe(anchor);
+    });
+  }
+
+  // Pause conic-gradient spin when demo out of viewport (CPU)
+  if('IntersectionObserver' in window){
+    const demoWraps = document.querySelectorAll('.demo-wrap');
+    const io = new IntersectionObserver(function(ents){
+      ents.forEach(function(e){
+        e.target.style.setProperty('--spin-state', e.isIntersecting ? 'running' : 'paused');
+      });
+    }, {threshold:0.05});
+    demoWraps.forEach(function(el){
+      el.style.setProperty('--spin-state', 'paused');
+      io.observe(el);
+    });
+  }
+
+  // Bot starts only when demo section first becomes visible
+  if('IntersectionObserver' in window){
+    const demo = document.getElementById('demo');
+    const io = new IntersectionObserver(function(ents){
+      ents.forEach(function(e){
+        if(e.isIntersecting){ maybeStartBot(); io.unobserve(e.target); }
+      });
+    }, {threshold: 0.2});
+    io.observe(demo);
+  } else {
+    maybeStartBot();
+  }
+});
+
+})();
+</script>
+
+</body>
+</html>

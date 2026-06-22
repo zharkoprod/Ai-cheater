@@ -2616,16 +2616,21 @@ strong.nc-brand .nc-glitch, b.nc-brand .nc-glitch,
   }
 
   // Кастомные YouTube-плееры — при клике подгружают iframe с автоплеем
+  // SECURITY: валидируем YouTube ID (только [A-Za-z0-9_-], 11 символов), sandbox, referrerpolicy
   document.querySelectorAll('.nc-video-yt-custom').forEach(function(p){
     p.addEventListener('click', function(){
       if(p.classList.contains('is-playing')) return;
       var id = p.dataset.ytId;
-      if(!id) return;
+      // Whitelist YouTube ID format — 11 символов, только safe chars
+      if(!id || !/^[A-Za-z0-9_-]{11}$/.test(id)) return;
       var ifr = document.createElement('iframe');
-      ifr.src = 'https://www.youtube-nocookie.com/embed/'+id+'?autoplay=1&rel=0&modestbranding=1';
-      ifr.title = p.dataset.title || 'Видео';
+      ifr.src = 'https://www.youtube-nocookie.com/embed/'+id+'?autoplay=1&rel=0&modestbranding=1&fs=1';
+      ifr.title = String(p.dataset.title || 'Видео').slice(0,100);
       ifr.allow = 'encrypted-media; picture-in-picture; fullscreen; autoplay';
       ifr.setAttribute('allowfullscreen','');
+      ifr.setAttribute('sandbox','allow-scripts allow-same-origin allow-presentation allow-popups');
+      ifr.setAttribute('referrerpolicy','no-referrer');
+      ifr.setAttribute('loading','lazy');
       p.appendChild(ifr);
       p.classList.add('is-playing');
     });

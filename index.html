@@ -2671,22 +2671,23 @@ strong.nc-brand .nc-glitch, b.nc-brand .nc-glitch,
 
 
 <script>
-/* Telegram Mini App — нативная оплата через openInvoice (надёжная версия) */
+/* Telegram Mini App — оплата через ЮКассу со СБП (openLink вместо openInvoice).
+   openInvoice не поддерживает СБП → переходим на полный ЮКасса-checkout.
+   Юзер видит ВСЕ методы оплаты: СБП, карта, SberPay, ЮMoney, T-Pay.
+   После оплаты ЮКасса делает webhook → Salebot → бот сам шлёт юзеру доступ. */
 (function(){
   var tg = window.Telegram && window.Telegram.WebApp;
-  if(!tg){ return; } // SDK не загрузился — fallback на yookassa.ru
-  // Проверяем что мы РЕАЛЬНО в Telegram Mini App, а не SDK подгружен в обычном браузере.
-  // Признаки: непустая initData ИЛИ известная платформа (не 'unknown').
+  if(!tg){ return; } // SDK не загрузился — обычный браузер, href=yookassa.ru работает как ссылка
   var isInTelegram = (tg.initData && tg.initData.length > 0) || (tg.platform && tg.platform !== 'unknown');
-  if(!isInTelegram){ return; } // обычный браузер — кнопки оставляем как есть (yookassa.ru fallback)
+  if(!isInTelegram){ return; } // не Mini App — оставляем native переход на yookassa.ru
   try{ tg.ready(); tg.expand(); }catch(e){}
 
-  function attachInvoiceHandler(btn){
-    var invoiceUrl = btn.getAttribute('data-tg-invoice');
-    if(!invoiceUrl) return;
+  function attachPaymentHandler(btn){
+    var yookassaUrl = btn.getAttribute('href');
+    if(!yookassaUrl || yookassaUrl.indexOf('yookassa.ru') === -1) return;
 
-    // ВАЖНО: в Mini App target=_blank открывает внешний браузер вместо openInvoice
-    // Убираем атрибуты которые мешают, превращаем ссылку в JS-кнопку
+    // В Mini App target=_blank открывает ВНЕШНИЙ браузер. Заменяем на JS-обработчик
+    // который зовёт Telegram.WebApp.openLink → откроется ВНУТРЕННИЙ браузер Telegram
     btn.removeAttribute('target');
     btn.removeAttribute('rel');
     btn.setAttribute('href', 'javascript:void(0)');
@@ -2696,31 +2697,28 @@ strong.nc-brand .nc-glitch, b.nc-brand .nc-glitch,
       e.preventDefault();
       e.stopPropagation();
 
-      if(!tg.openInvoice){
-        tg.showAlert && tg.showAlert('Обнови Telegram до последней версии — старая не умеет оплачивать внутри статьи');
-        return false;
-      }
-
       try{ tg.HapticFeedback.impactOccurred('medium'); }catch(e){}
 
-      tg.openInvoice(invoiceUrl, function(status){
-        if(status === 'paid'){
-          try{ tg.HapticFeedback.notificationOccurred('success'); }catch(e){}
-          tg.showAlert('✅ Оплата прошла! Доступ придёт тебе в боте в течение минуты.');
-        } else if(status === 'failed'){
-          try{ tg.HapticFeedback.notificationOccurred('error'); }catch(e){}
-          tg.showAlert('Платёж не прошёл. Попробуй ещё раз или напиши @zharkoprod');
-        } else if(status === 'pending'){
-          tg.showAlert('Платёж обрабатывается. Доступ придёт когда банк подтвердит оплату.');
-        }
-        // 'cancelled' — молча
+      // Сначала показываем юзеру что делать после оплаты
+      tg.showPopup({
+        title: 'Оплата через ЮКассу',
+        message: 'Сейчас откроется страница оплаты со всеми способами: СБП, карта, SberPay, ЮMoney.\n\nПосле успешной оплаты — вернись в бот @zharkoprod_bot, доступ придёт тебе в чат.',
+        buttons: [
+          { id: 'go', type: 'default', text: 'Перейти к оплате' },
+          { id: 'cancel', type: 'cancel' }
+        ]
+      }, function(btnId){
+        if(btnId !== 'go') return;
+        // openLink с try_instant_view:false — обычный браузерный UI (не Reader)
+        tg.openLink(yookassaUrl, { try_instant_view: false });
       });
+
       return false;
     });
   }
 
-  // Сразу при загрузке + повторно через 100мс на случай динамики
-  document.querySelectorAll('a[data-tg-invoice]').forEach(attachInvoiceHandler);
+  // Цепляемся ко всем кнопкам с yookassa.ru ссылкой
+  document.querySelectorAll('a[href*="yookassa.ru"]').forEach(attachPaymentHandler);
 })();
 </script>
 

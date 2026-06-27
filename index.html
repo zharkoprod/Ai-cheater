@@ -15,7 +15,7 @@
 <meta name="robots" content="index, follow, max-snippet:-1">
 
 <!-- ━━━ Security Headers (через meta — поскольку GitHub Pages не отдаёт security headers) ━━━ -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://telegram.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https://i.ytimg.com https://prod-files-secure.s3.us-west-2.amazonaws.com; media-src 'self' blob:; connect-src 'self' https://api.telegram.org; frame-src https://www.youtube-nocookie.com https://www.youtube.com; frame-ancestors 'self' https://web.telegram.org https://*.telegram.org https://t.me; base-uri 'self'; form-action 'none'; object-src 'none'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://telegram.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: https://i.ytimg.com https://prod-files-secure.s3.us-west-2.amazonaws.com; media-src 'self' blob:; connect-src 'self' https://api.telegram.org https://worker-production-88fd.up.railway.app; frame-src https://www.youtube-nocookie.com https://www.youtube.com; frame-ancestors 'self' https://web.telegram.org https://*.telegram.org https://t.me; base-uri 'self'; form-action 'none'; object-src 'none'; upgrade-insecure-requests">
 <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=(self), accelerometer=(), gyroscope=()">
@@ -2743,6 +2743,154 @@ strong.nc-brand .nc-glitch, b.nc-brand .nc-glitch,
       console.log('%cЭтот код — авторская работа. Любое копирование, воспроизведение или коммерческое использование запрещено.\nКонтакт: t.me/zharkoprod', sub);
     }
   } catch(e) {}
+})();
+</script>
+
+<script>
+/* ─── Анонимная аналитика лендинга → Railway CRM (без cookies, без PII, без согласия) ─── */
+(function(){
+  var ENDPOINT = 'https://worker-production-88fd.up.railway.app/api/landing/track';
+  var SS_KEY   = 'nc_sid';
+  var BATCH_MAX = 10;
+  var BATCH_INTERVAL = 4000;
+
+  // Session ID — анонимный UUID на одну вкладку (sessionStorage, не cookie)
+  function uuid(){
+    if(window.crypto && crypto.randomUUID){ try{ return crypto.randomUUID(); }catch(e){} }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){
+      var r=Math.random()*16|0, v=c==='x'?r:(r&0x3|0x8); return v.toString(16);
+    });
+  }
+  var sid;
+  try{ sid = sessionStorage.getItem(SS_KEY) || ''; }catch(e){ sid = ''; }
+  if(!sid){ sid = uuid(); try{ sessionStorage.setItem(SS_KEY, sid); }catch(e){} }
+
+  // Source: miniapp / browser
+  var tg = window.Telegram && window.Telegram.WebApp;
+  var inTelegram = !!(tg && ((tg.initData && tg.initData.length>0) || (tg.platform && tg.platform!=='unknown')));
+  var SOURCE = inTelegram ? 'miniapp' : 'browser';
+
+  var queue = [];
+  var flushTimer = null;
+
+  function flush(useBeacon){
+    if(!queue.length) return;
+    var batch = queue.splice(0, BATCH_MAX);
+    var payload = JSON.stringify({events: batch});
+    try{
+      if(useBeacon && navigator.sendBeacon){
+        var ok = navigator.sendBeacon(ENDPOINT, new Blob([payload], {type:'application/json'}));
+        if(!ok && window.fetch){ fetch(ENDPOINT, {method:'POST', body:payload, headers:{'Content-Type':'application/json'}, keepalive:true}).catch(function(){}); }
+      } else if(window.fetch){
+        fetch(ENDPOINT, {method:'POST', body:payload, headers:{'Content-Type':'application/json'}, keepalive:true}).catch(function(){});
+      }
+    }catch(e){}
+  }
+  function schedule(){
+    if(flushTimer) return;
+    flushTimer = setTimeout(function(){ flushTimer = null; flush(false); }, BATCH_INTERVAL);
+  }
+  function track(event_type, value){
+    queue.push({
+      session_id: sid,
+      event_type: event_type,
+      value: String(value == null ? '' : value).slice(0, 120),
+      source: SOURCE,
+      ts: new Date().toISOString()
+    });
+    if(queue.length >= BATCH_MAX) flush(false);
+    else schedule();
+  }
+
+  // 1. Page view
+  track('page_view', '');
+
+  // 2. Scroll depth по бакетам 10/25/50/75/90/100
+  var BUCKETS = [10, 25, 50, 75, 90, 100];
+  var hit = {};
+  function onScroll(){
+    var doc = document.documentElement, body = document.body;
+    var scrollH = (doc.scrollHeight || body.scrollHeight) - window.innerHeight;
+    if(scrollH <= 0) return;
+    var pct = Math.min(100, Math.round(100 * (window.scrollY||doc.scrollTop) / scrollH));
+    for(var i=0;i<BUCKETS.length;i++){
+      var b = BUCKETS[i];
+      if(pct >= b && !hit[b]){ hit[b] = 1; track('scroll_depth', String(b)); }
+    }
+  }
+  var scrollRaf = 0;
+  window.addEventListener('scroll', function(){
+    if(scrollRaf) return;
+    scrollRaf = requestAnimationFrame(function(){ scrollRaf = 0; onScroll(); });
+  }, {passive:true});
+
+  // 3. Section view — первое попадание в viewport > 40%
+  var seenSection = {};
+  var SECTION_MAP = ['hero','what_inside','story','why_water','wrong_reality','science','main_secret','horizons','content_anatomy','mega_prompts','results','main_thought','algorithm','tariffs','timofey','who_for','cases','spoiler','iceberg','what_to_do','ps'];
+  function sectionLabel(sec, idx){
+    if(sec.id) return sec.id.replace(/^nc-/, '').slice(0,40);
+    return SECTION_MAP[idx] || ('section_' + idx);
+  }
+  if('IntersectionObserver' in window){
+    var sections = document.querySelectorAll('section.nc-section');
+    var sio = new IntersectionObserver(function(ents){
+      ents.forEach(function(e){
+        if(!e.isIntersecting || e.intersectionRatio < 0.4) return;
+        var sec = e.target;
+        var idx = Array.prototype.indexOf.call(sections, sec);
+        var label = sectionLabel(sec, idx);
+        if(seenSection[label]) return;
+        seenSection[label] = 1;
+        track('section_view', label);
+      });
+    }, {threshold: [0.4]});
+    sections.forEach(function(s){ sio.observe(s); });
+  }
+
+  // 4. CTA click — ссылки на ЮКассу
+  document.addEventListener('click', function(e){
+    var a = e.target && (e.target.closest ? e.target.closest('a') : null);
+    if(!a) return;
+    var href = a.getAttribute('href') || '';
+    var tariff = a.getAttribute('data-tg-tariff') || '';
+    if(href.indexOf('yookassa.ru') >= 0 || tariff){
+      track('cta_click', tariff || (href.indexOf('aixWahvbh3u6') >= 0 ? 'basic' : (href.indexOf('aixW_7tM7IA7') >= 0 ? 'premium' : 'other')));
+    }
+  }, true);
+
+  // 5. Popup show/confirm/cancel — обёртка над tg.showPopup
+  if(tg && tg.showPopup){
+    var origPopup = tg.showPopup.bind(tg);
+    tg.showPopup = function(params, cb){
+      var ours = params && params.title && (params.title.indexOf('ЮКасс') >= 0 || params.title.indexOf('ЮКАСС') >= 0);
+      if(ours) track('payment_popup_shown', '');
+      return origPopup(params, function(id){
+        if(ours){
+          if(id === 'go') track('payment_popup_confirmed', '');
+          else track('payment_popup_cancelled', id || 'close');
+        }
+        if(cb) cb(id);
+      });
+    };
+  }
+
+  // 6. Heartbeat
+  var startTime = Date.now();
+  var alive = 0;
+  setInterval(function(){
+    if(document.visibilityState !== 'visible') return;
+    alive += 30;
+    track('time_alive', String(alive));
+  }, 30000);
+
+  // 7. Page hide → финальный flush
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState === 'hidden'){
+      track('page_hide', String(Math.floor((Date.now()-startTime)/1000)));
+      flush(true);
+    }
+  });
+  window.addEventListener('pagehide', function(){ flush(true); });
 })();
 </script>
 </body>

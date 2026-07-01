@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+
+  <!-- ━━━ Security Headers ━━━ -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://worker-production-88fd.up.railway.app; worker-src 'self' blob:; base-uri 'self'; form-action 'none'; frame-ancestors 'self' https://web.telegram.org https://*.telegram.org https://t.me; object-src 'none'; upgrade-insecure-requests">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
+
+  <title>Нейро-ЧИТЫ от Кирилла Жарко</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    /* ─── RESET ─── */
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+
+    :root {
+      --bg:     #0A0E27;
+      --bg2:    #0F1428;
+      --card:   #151B33;
+      --card2:  #1C2445;
+      --b1:     #08ADEC;
+      --b2:     #0476FF;
+      --text:   #FFFFFF;
+      --muted:  #8892B0;
+      --border: rgba(8,173,236,0.18);
+      --red:    #E74C3C;
+      --green:  #27AE60;
+    }
+
+    /* ─── COPY PROTECTION ─── */
+    body {
+      font-family:'Inter',sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      line-height:1.6;
+      overflow-x:hidden;
+      -webkit-user-select:none;
+      -moz-user-select:none;
+      user-select:none;
+      -webkit-touch-callout:none;
+    }
+
+    /* ─── UTILS ─── */
+    .g { background:linear-gradient(135deg,var(--b1),var(--b2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .container { max-width:1000px; margin:0 auto; padding:0 20px; }
+    .hidden { display:none !important; }
+
+    /* ─────────────────────────────────────
+       AUTH SCREEN
+    ───────────────────────────────────── */
+    #auth-wrap {
+      min-height:100vh;
+      display:flex; align-items:center; justify-content:center;
+      background:var(--bg);
+      padding:24px;
+    }
+    .auth-box {
+      width:100%; max-width:420px;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:24px;
+      padding:40px 36px;
+      text-align:center;
+    }
+    .auth-logo { font-size:48px; margin-bottom:20px; display:block; }
+    .auth-title { font-size:22px; font-weight:800; margin-bottom:8px; }
+    .auth-sub { font-size:14px; color:var(--muted); margin-bottom:32px; line-height:1.6; }
+
+    /* no access */
+    .no-access-icon { font-size:64px; margin-bottom:24px; display:block; }
+    .no-access-title { font-size:24px; font-weight:900; color:var(--red); margin-bottom:12px; }
+    .no-access-text { font-size:15px; color:var(--muted); line-height:1.7; }
+    .no-access-link {
+      display:inline-block; margin-top:24px;
+      background:linear-gradient(135deg,var(--b1),var(--b2));
+      color:#fff; padding:12px 28px; border-radius:10px;
+      text-decoration:none; font-weight:700; font-size:14px;
+    }
+
+    /* password form */
+    .pass-hint { font-size:12px; color:var(--muted); margin-bottom:20px; }
+    .pass-input-wrap { position:relative; margin-bottom:12px; }
+    #pass-input {
+      width:100%; padding:16px 20px;
+      background:var(--bg2); border:1px solid rgba(255,255,255,0.1);
+      border-radius:12px; color:var(--text);
+      font-family:'Inter',sans-serif; font-size:22px;
+      font-weight:700; text-align:center; letter-spacing:6px;
+      outline:none; transition:border-color .2s;
+    }
+    #pass-input:focus { border-color:var(--b1); }
+    #pass-input.error { border-color:var(--red); animation:shake .4s; }
+    @keyframes shake {
+      0%,100%{transform:translateX(0)}
+      25%{transform:translateX(-8px)}
+      75%{transform:translateX(8px)}
+    }
+    .pass-error { font-size:13px; color:var(--red); margin-bottom:16px; min-height:18px; }
+    .btn-enter {
+      width:100%;
+      background:linear-gradient(135deg,var(--b1),var(--b2));
+      color:#fff; border:none; cursor:pointer;
+      padding:16px; border-radius:12px;
+      font-family:'Inter',sans-serif; font-size:16px; font-weight:800;
+      transition:opacity .2s, transform .2s;
+      box-shadow:0 8px 24px rgba(4,118,255,.35);
+    }
+    .btn-enter:hover { opacity:.9; transform:translateY(-1px); }
+    .btn-enter:active { transform:translateY(0); }
+    .pass-footer { margin-top:20px; font-size:12px; color:var(--muted); }
+    .pass-footer a { color:var(--b1); text-decoration:none; }
+
+    /* ─────────────────────────────────────
+       MAIN CONTENT
+    ───────────────────────────────────── */
+    #main { display:none; }
+
+    /* NAV */
+    nav {
+      position:sticky; top:0; z-index:100;
+      background:rgba(10,14,39,.92); backdrop-filter:blur(20px);
+      border-bottom:1px solid var(--border);
+      padding:14px 20px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+    }
+    .nav-logo { font-weight:900; font-size:16px; }
+    .nav-user {
+      display:flex; align-items:center; gap:10px;
+      background:var(--card2); border:1px solid var(--border);
+      border-radius:100px; padding:8px 16px;
+      font-size:13px; color:var(--muted);
+    }
+    .nav-user strong { color:var(--b1); font-weight:700; }
+    .nav-tg {
+      display:inline-flex; align-items:center; gap:6px;
+      background:rgba(8,173,236,.1); border:1px solid var(--border);
+      color:var(--b1); text-decoration:none;
+      font-size:13px; font-weight:600;
+      padding:8px 16px; border-radius:100px;
+      transition:background .2s;
+    }
+    .nav-tg:hover { background:rgba(8,173,236,.2); }
+
+    /* SECTIONS */
+    .page-section { padding:48px 0; border-bottom:1px solid rgba(255,255,255,.05); }
+    .page-section:last-child { border-bottom:none; }
+    .sec-tag { font-size:11px; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:var(--b1); margin-bottom:12px; }
+    h1.page-title {
+      font-size:clamp(26px,5vw,44px); font-weight:900;
+      line-height:1.1; letter-spacing:-0.5px; margin-bottom:6px;
+    }
+    .page-subtitle { font-size:14px; color:var(--muted); }
+
+    /* TOP HERO */
+    #top-hero {
+      padding:48px 0 40px;
+      border-bottom:1px solid rgba(255,255,255,.05);
+    }
+    #top-hero .cols {
+      display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:start;
+      margin-top:36px;
+    }
+    @media(max-width:700px){ #top-hero .cols { grid-template-columns:1fr; gap:28px; } }
+
+    /* HOW TO USE */
+    .how-callout {
+      background:rgba(8,173,236,.08);
+      border:1px solid var(--border);
+      border-radius:16px; padding:24px;
+      margin-bottom:20px;
+    }
+    .how-callout h3 { font-size:16px; font-weight:800; margin-bottom:14px; color:var(--b1); }
+    .how-list { list-style:none; display:flex; flex-direction:column; gap:10px; }
+    .how-list li { font-size:14px; color:var(--text); display:flex; align-items:flex-start; gap:10px; }
+    .how-list li::before { content:'—'; color:var(--b1); flex-shrink:0; font-weight:700; margin-top:1px; }
+
+    /* RULES */
+    .rules-callout {
+      background:rgba(231,76,60,.08);
+      border:1px solid rgba(231,76,60,.25);
+      border-radius:16px; padding:20px 24px;
+    }
+    .rules-callout h3 { font-size:14px; font-weight:800; color:var(--red); margin-bottom:14px; }
+    details.rule { margin-bottom:10px; }
+    details.rule summary {
+      font-size:14px; font-weight:700; cursor:pointer;
+      list-style:none; display:flex; align-items:center; gap:8px;
+      color:var(--red);
+    }
+    details.rule summary::-webkit-details-marker { display:none; }
+    details.rule p { font-size:13px; color:var(--muted); margin-top:8px; margin-left:16px; line-height:1.6; font-style:italic; }
+    .welcome-text { margin-top:14px; font-size:14px; font-weight:700; }
+
+    /* AUTHOR */
+    .author-card {
+      background:var(--card);
+      border:1px solid rgba(255,255,255,.06);
+      border-radius:18px; padding:24px;
+    }
+    .author-head { font-size:15px; font-weight:800; margin-bottom:16px; }
+    .author-head span { color:var(--b1); }
+    .author-name-line { font-size:22px; font-weight:900; margin-bottom:4px; }
+    .author-handle { font-size:14px; color:var(--b1); font-weight:600; margin-bottom:12px; font-style:italic; }
+    .author-desc { font-size:13px; color:var(--muted); line-height:1.65; margin-bottom:20px; }
+    .soc-links { display:flex; flex-direction:column; gap:8px; }
+    .soc-btn {
+      display:flex; align-items:center; gap:10px;
+      padding:12px 16px;
+      background:var(--bg2); border:1px solid rgba(255,255,255,.07);
+      border-radius:10px; text-decoration:none;
+      color:var(--text); font-size:13px; font-weight:600;
+      transition:border-color .2s;
+    }
+    .soc-btn:hover { border-color:var(--border); }
+
+    /* EMPTY SECTION */
+    .empty-sec {
+      background:var(--card);
+      border:1px dashed rgba(255,255,255,.1);
+      border-radius:14px; padding:24px;
+      text-align:center; color:var(--muted); font-size:13px;
+    }
+
+    /* CATEGORY */
+    .cat-section { margin-bottom:0; }
+    .cat-head {
+      display:flex; align-items:center; gap:14px;
+      padding:18px 20px;
+      background:linear-gradient(135deg,rgba(8,173,236,.08),rgba(4,118,255,.04));
+      border:1px solid var(--border); border-radius:14px;
+      margin-bottom:16px;
+    }
+    .cat-icon {
+      width:40px; height:40px; border-radius:10px;
+      background:linear-gradient(135deg,var(--b1),var(--b2));
+      display:flex; align-items:center; justify-content:center;
+      font-size:18px; flex-shrink:0;
+    }
+    .cat-title { font-size:17px; font-weight:800; }
+    .cat-cnt { margin-left:auto; font-size:11px; font-weight:800; color:var(--b1); }
+
+    /* PROMPT CARDS */
+    .prompts-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
+    .p-card {
+      background:var(--card); border:1px solid rgba(255,255,255,.05);
+      border-radius:14px; padding:20px;
+      display:flex; flex-direction:column; gap:12px;
+      transition:border-color .2s;
+    }
+    .p-card.mega { border-color:rgba(8,173,236,.22); }
+    .p-card:hover { border-color:var(--border); }
+    .p-card-top { display:flex; align-items:flex-start; gap:12px; }
+    .p-icon { font-size:28px; flex-shrink:0; line-height:1; }
+    .p-meta { flex:1; }
+    .p-badge {
+      display:inline-block; margin-bottom:6px;
+      font-size:9px; font-weight:900; letter-spacing:1.5px;
+      color:var(--b1); background:rgba(8,173,236,.12);
+      border:1px solid rgba(8,173,236,.3); padding:3px 8px; border-radius:4px;
+    }
+    .p-name { font-size:14px; font-weight:800; line-height:1.4; }
+    .p-desc { font-size:12.5px; color:var(--muted); line-height:1.65; }
+    .btn-pdf {
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      width:100%; padding:12px;
+      background:linear-gradient(135deg,var(--b1),var(--b2));
+      color:#fff; border:none; border-radius:10px;
+      font-family:'Inter',sans-serif; font-size:13px; font-weight:700;
+      cursor:pointer; transition:opacity .2s;
+    }
+    .btn-pdf:hover { opacity:.9; }
+    .btn-pdf.placeholder {
+      background:var(--bg2); color:var(--muted);
+      border:1px dashed rgba(255,255,255,.1); cursor:default;
+    }
+    .btn-pdf.placeholder:hover { opacity:1; }
+
+    /* ─────────────────────────────────────
+       PDF MODAL
+    ───────────────────────────────────── */
+    #pdf-modal {
+      position:fixed; inset:0; z-index:1000;
+      background:rgba(0,0,0,.95); backdrop-filter:blur(10px);
+      display:none; flex-direction:column;
+    }
+    #pdf-modal.open { display:flex; }
+    .pdf-nav {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 20px;
+      background:var(--card); border-bottom:1px solid var(--border);
+      flex-shrink:0;
+    }
+    .pdf-title { font-size:14px; font-weight:700; max-width:60%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .pdf-controls { display:flex; align-items:center; gap:10px; }
+    .pdf-page-info { font-size:13px; color:var(--muted); }
+    .btn-pdf-nav {
+      background:var(--bg2); border:1px solid rgba(255,255,255,.1);
+      color:var(--text); border-radius:8px; padding:8px 14px;
+      font-family:'Inter',sans-serif; font-size:13px; font-weight:700;
+      cursor:pointer; transition:border-color .2s;
+    }
+    .btn-pdf-nav:hover { border-color:var(--border); }
+    .btn-pdf-close {
+      background:rgba(231,76,60,.15); border:1px solid rgba(231,76,60,.3);
+      color:var(--red); border-radius:8px; padding:8px 14px;
+      font-family:'Inter',sans-serif; font-size:13px; font-weight:700;
+      cursor:pointer; transition:background .2s;
+    }
+    .btn-pdf-close:hover { background:rgba(231,76,60,.25); }
+    .pdf-body {
+      flex:1; overflow-y:auto;
+      display:flex; flex-direction:column; align-items:center;
+      padding:24px 16px; gap:12px;
+      background:#111;
+    }
+    .pdf-page-wrap {
+      position:relative; box-shadow:0 8px 32px rgba(0,0,0,.5);
+      max-width:100%;
+    }
+    .pdf-page-wrap canvas { display:block; max-width:100%; }
+    .pdf-loading {
+      display:flex; align-items:center; justify-content:center;
+      padding:60px; color:var(--muted); font-size:15px; gap:12px;
+    }
+    .spinner {
+      width:24px; height:24px; border-radius:50%;
+      border:3px solid rgba(8,173,236,.2); border-top-color:var(--b1);
+      animation:spin .8s linear infinite; flex-shrink:0;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* ─── RESPONSIVE ─── */
+    @media(max-width:600px) {
+      .auth-box { padding:32px 24px; }
+      nav { flex-wrap:wrap; }
+      .nav-user { font-size:12px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     AUTH SCREEN
+═══════════════════════════════════════ -->
+<div id="auth-wrap">
+
+  <!-- No access -->
+  <div class="auth-box hidden" id="no-access">
+    <span class="no-access-icon">🔒</span>
+    <div class="no-access-title">Нет доступа</div>
+    <div class="no-access-text">
+      Эта страница доступна только для покупателей продукта<br>«Нейро-ЧИТЫ от Кирилла Жарко»<br><br>
+      Чтобы получить доступ — оформи покупку в Telegram-боте
+    </div>
+    <a href="https://t.me/zharkoprods" target="_blank" rel="noopener" class="no-access-link">
+      ✈️ Перейти к боту
+    </a>
+  </div>
+
+  <!-- Password screen -->
+  <div class="auth-box hidden" id="pass-screen">
+    <span class="auth-logo">🤖</span>
+    <div class="auth-title">Нейро-ЧИТЫ</div>
+    <div class="auth-sub">Введи одноразовый пароль из<br>своего меню в Telegram-боте</div>
+    <div class="pass-hint">Пароль обновляется каждый час</div>
+    <div class="pass-input-wrap">
+      <input
+        id="pass-input"
+        type="text"
+        inputmode="numeric"
+        maxlength="6"
+        placeholder="••••••"
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false"
+      >
+    </div>
+    <div class="pass-error" id="pass-error"></div>
+    <button class="btn-enter" id="btn-enter">Войти →</button>
+    <div class="pass-footer">
+      Нет пароля? <a href="https://t.me/zharkoprods" target="_blank" rel="noopener">Открой меню бота</a>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════
+     MAIN CONTENT
+═══════════════════════════════════════ -->
+<div id="main">
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">🤖 Нейро-ЧИТЫ</div>
+    <div class="nav-user">ID: <strong id="nav-id"></strong></div>
+    <a href="https://t.me/zharkoprods" target="_blank" rel="noopener" class="nav-tg">✈️ Канал</a>
+  </nav>
+
+  <!-- TOP HERO -->
+  <div id="top-hero">
+    <div class="container">
+      <div class="sec-tag">ТВОИ ИНСТРУМЕНТЫ</div>
+      <h1 class="page-title">Нейро-ЧИТЫ <span class="g">от Кирилла Жарко</span></h1>
+      <div class="page-subtitle">Авторская библиотека промптов — только для покупателей</div>
+
+      <div class="cols">
+        <!-- HOW TO USE + RULES -->
+        <div>
+          <div class="how-callout">
+            <h3>📌 Как использовать продукт, чтобы был результат?</h3>
+            <ul class="how-list">
+              <li>Досконально просматривать все промты и инструкцию к ним, чтобы не получать «кота в мешке»</li>
+              <li>Смотреть полезные видео подборки по теме</li>
+              <li>Изучать полезные материалы по теме</li>
+              <li>Читать Телеграм-канал «НЕЙРО-ЧИТЕРЫ» и включить уведомления</li>
+              <li>Делиться результатами в личку / чате канала по продукту</li>
+              <li>Рекомендовать этот продукт своим друзьям, коллегам, сотрудникам и всем кому можно и нельзя 😇</li>
+            </ul>
+          </div>
+
+          <div class="rules-callout">
+            <h3>‼️ Правила использования продукта</h3>
+            <details class="rule">
+              <summary>1 — Копирование и распространение <u>запрещено</u></summary>
+              <p>Давай я буду уважать тебя, а ты меня и мой труд, вложенный в этот продукт и передачу знаний/навыка</p>
+            </details>
+            <details class="rule">
+              <summary>2 — Эксклюзивность и авторство контента</summary>
+              <p>Используй эти промпты для себя и/или своих проектов, чтобы прокачать свои навыки и вырасти, а не для слива информации для дальнейшей монетизации. Для «отдельных личностей» — помни про мои связи с лучшими юристами и их возможности не в твою пользу ;)</p>
+            </details>
+            <div class="welcome-text">Если ты готов(а) расти в х10 быстрее и согласен(а) со всеми правилами — WELCOME! 🚀</div>
+          </div>
+        </div>
+
+        <!-- AUTHOR -->
+        <div>
+          <div class="author-card">
+            <div class="author-head">Автор продукта <span>«НЕЙРО-ЧИТЫ»</span></div>
+            <div class="author-name-line">Кирилл Жарко</div>
+            <div class="author-handle">@zharkoprod</div>
+            <div class="author-desc">Практикующий продюсер и контент-маркетолог, который применяет ИИ для х10 роста в своем направлении</div>
+            <div class="soc-links">
+              <a href="https://t.me/zharkoprods" target="_blank" rel="noopener" class="soc-btn">✈️ Телеграм-канал</a>
+              <a href="https://www.instagram.com/zharkoprod" target="_blank" rel="noopener" class="soc-btn">📸 Инстаграм* @zharkoprod</a>
+              <a href="https://www.youtube.com/@zharkoprod" target="_blank" rel="noopener" class="soc-btn">▶️ YouTube @zharkoprod</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- USEFUL MATERIALS -->
+  <div class="page-section">
+    <div class="container">
+      <div class="sec-tag">РАЗДЕЛ</div>
+      <h2 style="font-size:20px;font-weight:800;margin-bottom:20px">Полезные материалы по теме 💪🏻</h2>
+      <div class="empty-sec">Материалы скоро появятся здесь</div>
+    </div>
+  </div>
+
+  <!-- USEFUL VIDEOS -->
+  <div class="page-section">
+    <div class="container">
+      <div class="sec-tag">РАЗДЕЛ</div>
+      <h2 style="font-size:20px;font-weight:800;margin-bottom:20px">Полезные видео-уроки по теме 🎬</h2>
+      <div class="empty-sec">Видео-уроки скоро появятся здесь</div>
+    </div>
+  </div>
+
+  <!-- ─── МАРКЕТИНГ ─── -->
+  <div class="page-section">
+    <div class="container">
+      <div class="cat-section">
+        <div class="cat-head">
+          <div class="cat-icon">👨🏻‍💻</div>
+          <div class="cat-title">Маркетинг</div>
+          <div class="cat-cnt">1 МЕГА-ПРОМТ</div>
+        </div>
+        <div class="prompts-grid">
+          <div class="p-card mega">
+            <div class="p-card-top">
+              <span class="p-icon">🤯</span>
+              <div class="p-meta">
+                <div class="p-badge">МЕГА-ПРОМТ</div>
+                <div class="p-name">МЕГА-ПРОМТ для полного анализа Целевой Аудитории по >200 пунктам</div>
+              </div>
+            </div>
+            <div class="p-desc">Превращает нейронку в личного аналитика, который за один сеанс вскрывает аудиторию до молекул — боли, страхи, язык, триггеры покупки. Ты получаешь «Профиль клиента» из 200+ пунктов: готовые офферы, банк возражений, хуки для рилсов — все на языке клиента</div>
+            <button class="btn-pdf placeholder" onclick="openPdf(this,'МЕГА-ПРОМТ — Анализ ЦА','')">
+              📄 Открыть промт <span style="font-size:11px;opacity:.7">(скоро)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── КОНТЕНТ ─── -->
+  <div class="page-section">
+    <div class="container">
+      <div class="cat-section">
+        <div class="cat-head">
+          <div class="cat-icon">📈</div>
+          <div class="cat-title">Контент</div>
+          <div class="cat-cnt">1 МЕГА-ПРОМТ</div>
+        </div>
+        <div class="prompts-grid">
+          <div class="p-card mega">
+            <div class="p-card-top">
+              <span class="p-icon">🚀</span>
+              <div class="p-meta">
+                <div class="p-badge">МЕГА-ПРОМТ</div>
+                <div class="p-name">МЕГА-ПРОМТ для создания вирального / продающего Reels</div>
+              </div>
+            </div>
+            <div class="p-desc">Полная система для рилсов которые реально залетают и продают — от стратегии и 50 идей контента до готового сценария с таймингом по секундам. За 15-20 минут получаешь сценарий уровня нанятого рилс-продюсера. Встроенный Анти-ИИ</div>
+            <button class="btn-pdf placeholder" onclick="openPdf(this,'МЕГА-ПРОМТ — Viральный Reels','')">
+              📄 Открыть промт <span style="font-size:11px;opacity:.7">(скоро)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── НАПИСАНИЕ ТЕКСТОВ ─── -->
+  <div class="page-section">
+    <div class="container">
+      <div class="cat-section">
+        <div class="cat-head">
+          <div class="cat-icon">📝</div>
+          <div class="cat-title">Написание текстов (копирайтинг)</div>
+          <div class="cat-cnt">1 МЕГА-ПРОМТ</div>
+        </div>
+        <div class="prompts-grid">
+          <div class="p-card mega">
+            <div class="p-card-top">
+              <span class="p-icon">📝</span>
+              <div class="p-meta">
+                <div class="p-badge">МЕГА-ПРОМТ</div>
+                <div class="p-name">МЕГА-ПРОМТ для написания текстов</div>
+              </div>
+            </div>
+            <div class="p-desc">«Карманный копирайтер» уровня агентства за 1.000$+/мес — 24/7 в твоей ИИшке. Лендинги, email-цепочки, прогревы в сторис, посты в Telegram и Instagram — по 22+ формулам (AIDA, PAS, PASTOR, RMBC, Чалдини). База 200+ силовых слов + Анти-ИИ на 35+ маркеров</div>
+            <button class="btn-pdf placeholder" onclick="openPdf(this,'МЕГА-ПРОМТ — Написание текстов','')">
+              📄 Открыть промт <span style="font-size:11px;opacity:.7">(скоро)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── ПРОДАЖИ ─── -->
+  <div class="page-section">
+    <div class="container">
+      <div class="cat-section">
+        <div class="cat-head">
+          <div class="cat-icon">💰</div>
+          <div class="cat-title">Продажи</div>
+          <div class="cat-cnt">1 МЕГА + 10 мини-промтов</div>
+        </div>
+        <div class="prompts-grid">
+
+          <div class="p-card mega">
+            <div class="p-card-top">
+              <span class="p-icon">🤑</span>
+              <div class="p-meta">
+                <div class="p-badge">МЕГА-ПРОМТ</div>
+                <div class="p-name">МЕГА-ПРОМТ для создания Продукта / Продуктовой матрицы / Услуги / Уроков</div>
+              </div>
+            </div>
+            <div class="p-desc">Система из 10 блоков превращает ИИ в личного продуктолога: от диагностики «с чего начать» до готовой матрицы и упакованного оффера. Закрывает все — инфопродукты, услуги, физтовары</div>
+            <button class="btn-pdf placeholder" onclick="openPdf(this,'МЕГА-ПРОМТ — Создание Продукта','')">
+              📄 Открыть промт <span style="font-size:11px;opacity:.7">(скоро)</span>
+            </button>
+          </div>
+
+          <div class="p-card">
+            <div class="p-card-top">
+              <span class="p-icon">📦</span>
+              <div class="p-meta">
+                <div class="p-name">Мини-промт для создания мини-продуктов</div>
+              </div>
+            </div>
+            <div class="p-desc">Создает первый продукт который дает результат за 1-3 дня + несет ценность на х10 от цены — и клиент сам хочет купить следующий</div>
+            <button class="btn-pdf placeholder" onclick="openPdf(this,'Мини-промт — Мини-продукты','')">
+              📄 Открыть промт <span style="font-size:11px;opacity:.7">(скоро)</span>
+            </button>
+          </div>
+
+          <div class="p-card">
+            <div class="p-card-top">
+              <span class="p-icon">💎</span>
+              <div class="p-meta">
+                <div class="p-name">Мини-промт для выбора Формата Продукта под тебя</div>
+              </div>
+            </div>
+            <div class="p-desc">Выбирает оптимальный формат — курс, наставничество, марафон — и сразу дает полную структуру с программой и механиками</div>
+            <button class="btn-pdf placeholder" onclick="openPdf(this,'Мини-промт — Формат Продукта','')">
+              📄 Открыть промт <span style="font-size:11px;opacity:.7">(скоро)</span>
+            </button>
+          </div>
+
+          <div class="p-card">
+            <div class="p-card-top">
+              <span class="p-icon">💪🏻</span>
+              <div class="p-meta">
+                <div class="p-name">Мини-промт для упаковки Основного Продукта</div>
+              </div>
+            </div>
+            <div class="p-desc">Строит продукт от результата к содержанию, добавляет механики чтобы ученики доходили до конца, и систему сбора отзывов</div>
+            <button class="btn-pdf placeholder" onclick="openPdf(this,'Мини-промт — Упаковка Продукта','')">
+              📄 Открыть промт <span style="font-size:11px;opacity:.7">(скоро)</span>
+            </button>
+          </div>
+
+          <div class="p-card">
+            <div class="p-card-top">
+              <span class="p-icon">🎬</span>
+              <div class="p-meta">
+                <div class="p-name">Мини-промт для создания Видео-уроков</div>
+              </div>
+            </div>
+            <div class="p-desc">Пишет сценарий с захватом с первых секунд и заданием которое человек реально выполнит — не закроет через 5 минут</div>
+            <button class="btn-pdf placeholder" onclick="openPdf(this,'Мини-промт — Видео-уроки','')">
+              📄 Открыть промт <span style="font-size:11px;opacity:.7">(скоро)</span>
+            </button>
+          </div>
+
+          <div class="p-card">
+            <div class="p-card-top">
+              <span class="p-icon">🧲</span>
+              <div class="p-meta">
+                <div class="p-name">Мини-промт для создания Лид-магнитов</div>
+              </div>
+            </div>
+            <div class="p-desc">Создает лид-магнит который притягивает тех, кто готов платить, и сразу ведет к первой покупке</div>
+            <button class="btn-pdf placeholder" onclick="openPdf(this,'Мини-промт — Лид-магниты','')">
+              📄 Открыть промт <span style="font-size:11px;opacity:.7">(скоро)</span>
+            </button>
+          </div>
+
+          <div class="p-card">
+            <div class="p-card-top">
+              <span class="p-icon">❤️‍🔥</span>
+              <div class="p-meta">
+                <div class="p-name">Мини-промт «Архитектор» для твоих услуг</div>
+              </div>
+            </div>
+            <div class="p-desc">Упаковывает услугу в конкретный оффер с результатом, нормальными ценами и скриптом продающего звонка</div>
+            <button class="btn-pdf placeholder" onclick="openPdf(this,'Мини-промт — Архитектор Услуг','')">
+              📄 Открыть промт <span style="font-size:11px;opacity:.7">(скоро)</span>
+            </button>
+          </div>
+
+          <div class="p-card">
+            <div class="p-card-top">
+              <span class="p-icon">🧿</span>
+              <div class="p-meta">
+                <div class="p-name">Мини-промт для построения Продуктовой Матрицы</div>
+              </div>
+            </div>
+            <div class="p-desc">Выстраивает линейку от бесплатного до дорогого с логикой переходов и считает сколько клиентов нужно для финансовой цели</div>
+            <button class="btn-pdf placeholder" onclick="openPdf(this,'Мини-промт — Продуктовая Матрица','')">
+              📄 Открыть промт <span style="font-size:11px;opacity:.7">(скоро)</span>
+            </button>
+          </div>
+
+          <div class="p-card">
+            <div class="p-card-top">
+              <span class="p-icon">📈</span>
+              <div class="p-meta">
+                <div class="p-name">Мини-промт по повышению LTV клиентов</div>
+              </div>
+            </div>
+            <div class="p-desc">Строит систему где каждый покупатель приносит в 2-3 раза больше через допродажи, письма после покупки и возврат ушедших</div>
+            <button class="btn-pdf placeholder" onclick="openPdf(this,'Мини-промт — LTV','')">
+              📄 Открыть промт <span style="font-size:11px;opacity:.7">(скоро)</span>
+            </button>
+          </div>
+
+          <div class="p-card">
+            <div class="p-card-top">
+              <span class="p-icon">👨🏻‍💻</span>
+              <div class="p-meta">
+                <div class="p-name">Мини-промт «Алекс Хармози под рукой» для офферов</div>
+              </div>
+            </div>
+            <div class="p-desc">Упаковывает продукт так, чтобы было понятно что получишь, за сколько времени и почему стоит своих денег — три готовых текста</div>
+            <button class="btn-pdf placeholder" onclick="openPdf(this,'Мини-промт — Оффер Хармози','')">
+              📄 Открыть промт <span style="font-size:11px;opacity:.7">(скоро)</span>
+            </button>
+          </div>
+
+          <div class="p-card">
+            <div class="p-card-top">
+              <span class="p-icon">😈</span>
+              <div class="p-meta">
+                <div class="p-name">Мини-промт «АНАЛИЗАТОР» — Анализ Рынка и Конкурентов</div>
+              </div>
+            </div>
+            <div class="p-desc">Анализирует рынок и дает четкий ответ — делать сейчас или менять идею, и как позиционироваться чтобы выделиться</div>
+            <button class="btn-pdf placeholder" onclick="openPdf(this,'Мини-промт — Анализатор Рынка','')">
+              📄 Открыть промт <span style="font-size:11px;opacity:.7">(скоро)</span>
+            </button>
+          </div>
+
+        </div><!-- /prompts-grid -->
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div style="padding:32px 0; text-align:center; border-top:1px solid rgba(255,255,255,.05); background:var(--bg2);">
+    <div class="container">
+      <p style="font-size:13px; color:var(--muted);">
+        © 2026 Нейро-ЧИТЫ by
+        <a href="https://t.me/zharkoprods" target="_blank" rel="noopener" style="color:var(--b1);text-decoration:none">Кирилл Жарко</a>
+        &nbsp;·&nbsp;
+        <a href="https://t.me/zharkoprods" target="_blank" rel="noopener" style="color:var(--b1);text-decoration:none">Телеграм</a>
+        &nbsp;·&nbsp;
+        <a href="https://www.youtube.com/@zharkoprod" target="_blank" rel="noopener" style="color:var(--b1);text-decoration:none">YouTube</a>
+      </p>
+      <p style="font-size:12px; color:#445; margin-top:10px; line-height:1.6;" id="footer-uid"></p>
+      <p style="font-size:11px; color:#334; margin-top:8px;">
+        *Деятельность Meta Platforms Inc. признана экстремистской и запрещена на территории РФ
+      </p>
+    </div>
+  </div>
+
+</div><!-- /#main -->
+
+<!-- ═══════════════════════════════════════
+     PDF VIEWER MODAL
+═══════════════════════════════════════ -->
+<div id="pdf-modal">
+  <div class="pdf-nav">
+    <div class="pdf-title" id="pdf-modal-title">Промт</div>
+    <div class="pdf-controls">
+      <span class="pdf-page-info" id="pdf-page-info"></span>
+      <button class="btn-pdf-nav" id="btn-prev">← Назад</button>
+      <button class="btn-pdf-nav" id="btn-next">Далее →</button>
+      <button class="btn-pdf-close" id="btn-close-pdf">✕ Закрыть</button>
+    </div>
+  </div>
+  <div class="pdf-body" id="pdf-body">
+    <div class="pdf-loading"><div class="spinner"></div> Загрузка...</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     PDF.js 4.10.38 — локально (закрывает CVE-2024-4367 + supply-chain risk)
+═══════════════════════════════════════ -->
+<script type="module">
+  import * as pdfjsLib from './lib/pdf.min.mjs';
+  window.pdfjsLib = pdfjsLib;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = './lib/pdf.worker.min.mjs';
+</script>
+<script>
+/* ────────────────────────────────────────
+   Проверка пароля через сервер (Railway)
+   Секрет хранится на сервере, не в коде
+──────────────────────────────────────── */
+const VERIFY_URL = 'https://worker-production-88fd.up.railway.app';
+
+async function isValidPass(input) {
+  try {
+    const res = await fetch(`${VERIFY_URL}/verify-access?t=${encodeURIComponent(input.trim())}`);
+    const data = await res.json();
+    return data.ok === true;
+  } catch (e) {
+    return false;
+  }
+}
+
+/* ────────────────────────────────────────
+   COPY PROTECTION
+──────────────────────────────────────── */
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('copy', e => e.preventDefault());
+document.addEventListener('cut', e => e.preventDefault());
+document.addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  // Block print, save, view source, copy, select all, dev tools
+  if ((e.ctrlKey || e.metaKey) && ['p','s','u','a','c','x'].includes(k)) {
+    e.preventDefault(); e.stopPropagation();
+  }
+  if (e.key === 'F12') e.preventDefault();
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && ['i','j','c'].includes(k)) e.preventDefault();
+});
+// Disable drag
+document.addEventListener('dragstart', e => e.preventDefault());
+
+// Basic DevTools detection
+let devtoolsOpen = false;
+setInterval(() => {
+  const thresh = 200;
+  const open = (window.outerWidth - window.innerWidth > thresh) || (window.outerHeight - window.innerHeight > thresh);
+  if (open && !devtoolsOpen) {
+    devtoolsOpen = true;
+    document.body.style.filter = 'blur(20px)';
+  } else if (!open && devtoolsOpen) {
+    devtoolsOpen = false;
+    document.body.style.filter = '';
+  }
+}, 1000);
+
+/* ────────────────────────────────────────
+   AUTH FLOW
+──────────────────────────────────────── */
+function getParam(name) {
+  return new URLSearchParams(window.location.search).get(name);
+}
+
+const tgId = getParam('t');
+const SESSION_KEY = 'nc_auth_' + (tgId || '');
+
+function showEl(id) { document.getElementById(id).classList.remove('hidden'); }
+function hideEl(id) { document.getElementById(id).classList.add('hidden'); }
+
+async function initAuth() {
+  const wrap = document.getElementById('auth-wrap');
+
+  // No telegram ID in URL → no access
+  if (!tgId) {
+    showEl('no-access');
+    return;
+  }
+
+  // Already authenticated this session?
+  if (sessionStorage.getItem(SESSION_KEY) === '1') {
+    loadContent();
+    return;
+  }
+
+  // Show password screen
+  showEl('pass-screen');
+  document.getElementById('pass-input').focus();
+}
+
+async function attemptLogin() {
+  const input = document.getElementById('pass-input').value;
+  const errEl = document.getElementById('pass-error');
+  const inp = document.getElementById('pass-input');
+
+  if (!input || input.length < 4) {
+    errEl.textContent = 'Введи пароль из бота';
+    return;
+  }
+
+  const ok = await isValidPass(input);
+  if (ok) {
+    sessionStorage.setItem(SESSION_KEY, '1');
+    document.getElementById('auth-wrap').style.display = 'none';
+    loadContent();
+  } else {
+    errEl.textContent = 'Неверный пароль. Проверь меню бота';
+    inp.classList.add('error');
+    setTimeout(() => inp.classList.remove('error'), 500);
+    inp.value = '';
+    inp.focus();
+  }
+}
+
+function loadContent() {
+  document.getElementById('auth-wrap').style.display = 'none';
+  document.getElementById('main').style.display = 'block';
+  document.getElementById('nav-id').textContent = tgId;
+  document.getElementById('footer-uid').textContent =
+    'Этот документ принадлежит покупателю с Telegram ID: ' + tgId + ' | Нейро-ЧИТЫ @zharkoprod';
+}
+
+// Button & Enter key
+document.getElementById('btn-enter').addEventListener('click', attemptLogin);
+document.getElementById('pass-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') attemptLogin();
+});
+
+// Init on load
+initAuth();
+
+/* ────────────────────────────────────────
+   PDF VIEWER
+──────────────────────────────────────── */
+// PDF.js workerSrc уже настроен в module-инициализации выше (локальный путь)
+// Это легаси-чек на случай если pdfjsLib не загрузился вовремя
+function ensurePdfReady(){
+  return new Promise(function(resolve){
+    if(window.pdfjsLib) return resolve();
+    var t = setInterval(function(){
+      if(window.pdfjsLib){ clearInterval(t); resolve(); }
+    }, 50);
+    setTimeout(function(){ clearInterval(t); resolve(); }, 3000);
+  });
+}
+
+let pdfDoc = null, currentPage = 1, totalPages = 0;
+let currentPdfTitle = '';
+
+async function openPdf(btn, title, url) {
+  if (!url) return; // placeholder — do nothing yet
+
+  currentPdfTitle = title;
+  document.getElementById('pdf-modal-title').textContent = title;
+  document.getElementById('pdf-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('pdf-body').innerHTML =
+    '<div class="pdf-loading"><div class="spinner"></div> Загрузка...</div>';
+
+  try {
+    await ensurePdfReady();
+    if(!window.pdfjsLib){ throw new Error('PDF.js не загрузился'); }
+    pdfDoc = await pdfjsLib.getDocument(url).promise;
+    totalPages = pdfDoc.numPages;
+    currentPage = 1;
+    await renderAllPages();
+  } catch(e) {
+    document.getElementById('pdf-body').innerHTML =
+      '<div class="pdf-loading" style="flex-direction:column;gap:16px;color:#E74C3C">❌ Ошибка загрузки PDF</div>';
+  }
+}
+
+async function renderAllPages() {
+  const body = document.getElementById('pdf-body');
+  body.innerHTML = '';
+  updateNav();
+
+  for (let i = 1; i <= totalPages; i++) {
+    const page = await pdfDoc.getPage(i);
+    const scale = Math.min(1.5, (window.innerWidth - 32) / page.getViewport({scale:1}).width);
+    const vp = page.getViewport({scale});
+
+    const wrap = document.createElement('div');
+    wrap.className = 'pdf-page-wrap';
+    wrap.style.width = vp.width + 'px';
+
+    const canvas = document.createElement('canvas');
+    canvas.width = vp.width;
+    canvas.height = vp.height;
+
+    const ctx = canvas.getContext('2d');
+    await page.render({canvasContext: ctx, viewport: vp}).promise;
+
+    // ─── WATERMARK ───
+    drawWatermark(ctx, vp.width, vp.height, tgId);
+
+    wrap.appendChild(canvas);
+    body.appendChild(wrap);
+  }
+}
+
+function drawWatermark(ctx, w, h) {
+  const id = tgId || 'unknown';
+  const txt = 'Этот документ принадлежит покупателю с Telegram ID: ' + id + ' | @zharkoprod';
+
+  // Diagonal tiled watermark (semi-transparent)
+  ctx.save();
+  ctx.globalAlpha = 0.06;
+  ctx.fillStyle = '#000';
+  ctx.font = 'bold ' + Math.max(14, w * 0.022) + 'px Inter, sans-serif';
+  ctx.translate(w / 2, h / 2);
+  ctx.rotate(-Math.PI / 6);
+  const spacing = 160;
+  for (let y = -h; y < h; y += spacing) {
+    for (let x = -w; x < w; x += spacing) {
+      ctx.fillText(txt, x, y);
+    }
+  }
+  ctx.restore();
+
+  // Bottom footer watermark (clear)
+  const barH = Math.max(28, h * 0.032);
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  ctx.fillRect(0, h - barH, w, barH);
+  ctx.fillStyle = '#666';
+  ctx.font = Math.max(9, barH * 0.48) + 'px Inter, sans-serif';
+  ctx.fillText(txt, 12, h - barH * 0.3);
+  ctx.restore();
+}
+
+function updateNav() {
+  document.getElementById('pdf-page-info').textContent = totalPages + ' стр.';
+}
+
+document.getElementById('btn-close-pdf').addEventListener('click', () => {
+  document.getElementById('pdf-modal').classList.remove('open');
+  document.body.style.overflow = '';
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('pdf-modal').classList.contains('open')) {
+    document.getElementById('pdf-modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+});
+
+// Hide prev/next since all pages rendered at once
+document.getElementById('btn-prev').style.display = 'none';
+document.getElementById('btn-next').style.display = 'none';
+</script>
+
+</body>
+</html>
